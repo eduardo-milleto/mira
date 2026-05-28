@@ -11,9 +11,17 @@ function firstName(name: string): string {
 export function HeroCard({ userName }: { userName: string }) {
   return (
     <section className="relative overflow-hidden rounded-2xl border border-border">
-      {/* camada de fundo: placeholder do "caminho verde". a imagem da paisagem
-          entra aqui depois (basta setar background-image nesta div). */}
-      <div className="hero-landscape pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_80%_-10%,rgba(34,197,94,0.25),transparent_55%),linear-gradient(180deg,#0d1410_0%,#0a0b0a_100%)]" />
+      {/* video de fundo do hero + overlay escuro pra legibilidade do conteudo */}
+      <video
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+        src="/mira-bg.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-hidden="true"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-bg/95 via-bg/70 to-bg/85" />
 
       <div className="relative grid gap-8 p-8 lg:grid-cols-[1.1fr_auto_1.1fr] lg:items-center">
         <div className="max-w-md">

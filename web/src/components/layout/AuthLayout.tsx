@@ -14,12 +14,18 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <section className="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex">
-        {/* brilho verde no rodape, como no mockup */}
-        <div className="pointer-events-none absolute -bottom-40 left-1/2 h-80 w-[120%] -translate-x-1/2 rounded-full bg-brand/20 blur-[120px]" />
+        {/* imagem de fundo (decorativa) + overlay escuro pra manter o texto legivel */}
+        <img
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+          src="/login-bg.png"
+          alt=""
+          aria-hidden="true"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-bg via-bg/70 to-bg/30" />
 
-        <Logo />
+        <Logo className="relative z-10" />
 
-        <div className="relative max-w-md">
+        <div className="relative z-10 max-w-md">
           <h1 className="text-5xl font-light leading-[1.05] tracking-tighter">
             Suas finanças,
             <br />
@@ -43,7 +49,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <div className="relative grid grid-cols-3 gap-6">
+        <div className="relative z-10 grid grid-cols-3 gap-6">
           {features.map(({ icon: Icon, title, desc }) => (
             <div key={title} className="flex flex-col gap-2">
               <span className="flex h-9 w-9 items-center justify-center rounded-full border border-border">
