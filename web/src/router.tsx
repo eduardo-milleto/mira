@@ -9,7 +9,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { sessionQueryOptions } from "./features/auth/auth.api";
 import { LoginPage } from "./features/auth/LoginPage";
 import { SignupPage } from "./features/auth/SignupPage";
-import { AppShell } from "./components/layout/AppShell";
+import { OverviewPage } from "./features/overview/OverviewPage";
 
 type RouterContext = { queryClient: QueryClient };
 
@@ -46,7 +46,7 @@ const appRoute = createRoute({
     const user = await context.queryClient.ensureQueryData(sessionQueryOptions);
     if (!user) throw redirect({ to: "/login" });
   },
-  component: AppShell,
+  component: OverviewPage,
 });
 
 const routeTree = rootRoute.addChildren([loginRoute, signupRoute, appRoute]);
