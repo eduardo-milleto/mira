@@ -1,12 +1,11 @@
 import { ArrowDown, ChevronDown, Info } from "lucide-react";
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { Card } from "../../components/ui/Card";
+import { FeatureCard } from "../../components/FeatureCard";
 import { formatBRL } from "../../lib/format";
 import { useSession } from "../auth/auth.api";
 import { HeroCard } from "./HeroCard";
 import { SpendingChart } from "./SpendingChart";
 import { ProjectionChart } from "./ProjectionChart";
-import { FeatureCard } from "./FeatureCard";
 import { featureLinks } from "./data";
 
 // dropdown apenas visual por ora (sem <select> nativo) — vira combobox real quando filtrar de verdade
@@ -26,8 +25,7 @@ export function OverviewPage() {
   const { data: user } = useSession();
 
   return (
-    <DashboardLayout>
-      <div className="mx-auto flex max-w-7xl flex-col gap-6">
+    <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <HeroCard userName={user?.name ?? ""} />
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -80,7 +78,6 @@ export function OverviewPage() {
             <FeatureCard key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
           ))}
         </div>
-      </div>
-    </DashboardLayout>
+    </div>
   );
 }

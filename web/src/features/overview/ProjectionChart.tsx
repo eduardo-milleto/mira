@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import { formatBRLCompact } from "../../lib/format";
 import { projectionData } from "./data";
-import { ChartTooltip } from "./ChartTooltip";
+import { ChartTooltip } from "../../components/charts/ChartTooltip";
 
 const axisTick = { fill: "rgba(255,255,255,0.4)", fontSize: 12 };
 

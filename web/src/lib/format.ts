@@ -19,3 +19,8 @@ export function formatBRL(value: number): string {
 export function formatBRLCompact(value: number): string {
   return brlCompact.format(value);
 }
+
+// "39,4%"
+export function formatPct(value: number): string {
+  return `${value.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+}

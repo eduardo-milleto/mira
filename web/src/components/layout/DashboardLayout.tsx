@@ -1,5 +1,4 @@
-import type { ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import {
   Menu,
   MenuItem,
@@ -24,18 +23,23 @@ import type { LucideIcon } from "lucide-react";
 import { Logo } from "../Logo";
 import { useLogout, useSession } from "../../features/auth/auth.api";
 
-type NavItem = { icon: LucideIcon; label: string; active?: boolean };
+type NavItem = { icon: LucideIcon; label: string; to?: string; exact?: boolean };
 
+// itens com `to` navegam; os demais ainda nao tem pagina (placeholder)
 const navItems: NavItem[] = [
-  { icon: Home, label: "Visão geral", active: true },
-  { icon: CalendarDays, label: "Gastos mensais" },
+  { icon: Home, label: "Visão geral", to: "/", exact: true },
+  { icon: CalendarDays, label: "Ganhos mensais", to: "/ganhos" },
   { icon: BarChart3, label: "Projeções" },
   { icon: Sparkles, label: "Sugestões IA" },
   { icon: Coins, label: "Potenciais rendas" },
   { icon: Target, label: "Investimentos" },
 ];
 
-export function DashboardLayout({ children }: { children: ReactNode }) {
+const navBase = "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm outline-none transition";
+const navInactive = "text-muted hover:bg-white/5 hover:text-heading";
+const navActive = "border border-brand/30 bg-brand-soft text-heading";
+
+export function DashboardLayout() {
   const navigate = useNavigate();
   const { data: user } = useSession();
   const logout = useLogout();
@@ -52,20 +56,30 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             <Logo />
           </div>
           <nav className="flex flex-col gap-1">
-            {navItems.map(({ icon: Icon, label, active }) => (
-              <button
-                key={label}
-                type="button"
-                className={
-                  active
-                    ? "flex items-center gap-3 rounded-xl border border-brand/30 bg-brand-soft px-3 py-2.5 text-sm text-heading"
-                    : "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-white/5 hover:text-heading"
-                }
-              >
-                <Icon className={active ? "h-4 w-4 text-brand" : "h-4 w-4"} />
-                {label}
-              </button>
-            ))}
+            {navItems.map(({ icon: Icon, label, to, exact }) =>
+              to ? (
+                <Link
+                  key={label}
+                  to={to}
+                  activeOptions={{ exact: Boolean(exact) }}
+                  className={navBase}
+                  activeProps={{ className: navActive }}
+                  inactiveProps={{ className: navInactive }}
+                >
+                  {({ isActive }) => (
+                    <>
+                      <Icon className={isActive ? "h-4 w-4 text-brand" : "h-4 w-4"} />
+                      {label}
+                    </>
+                  )}
+                </Link>
+              ) : (
+                <button key={label} type="button" className={`${navBase} ${navInactive}`}>
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </button>
+              ),
+            )}
           </nav>
         </div>
 
@@ -118,7 +132,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6">
+          <Outlet />
+        </main>
       </div>
     </div>
   );

@@ -9,7 +9,9 @@ import type { QueryClient } from "@tanstack/react-query";
 import { sessionQueryOptions } from "./features/auth/auth.api";
 import { LoginPage } from "./features/auth/LoginPage";
 import { SignupPage } from "./features/auth/SignupPage";
+import { DashboardLayout } from "./components/layout/DashboardLayout";
 import { OverviewPage } from "./features/overview/OverviewPage";
+import { GanhosPage } from "./features/ganhos/GanhosPage";
 
 type RouterContext = { queryClient: QueryClient };
 
@@ -38,18 +40,34 @@ const signupRoute = createRoute({
   component: SignupPage,
 });
 
-// area autenticada: sem sessao, manda pro login
-const appRoute = createRoute({
+// layout autenticado: sem sessao manda pro login; renderiza o shell + <Outlet/>
+const appLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  id: "app",
   beforeLoad: async ({ context }) => {
     const user = await context.queryClient.ensureQueryData(sessionQueryOptions);
     if (!user) throw redirect({ to: "/login" });
   },
+  component: DashboardLayout,
+});
+
+const overviewRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/",
   component: OverviewPage,
 });
 
-const routeTree = rootRoute.addChildren([loginRoute, signupRoute, appRoute]);
+const ganhosRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/ganhos",
+  component: GanhosPage,
+});
+
+const routeTree = rootRoute.addChildren([
+  loginRoute,
+  signupRoute,
+  appLayoutRoute.addChildren([overviewRoute, ganhosRoute]),
+]);
 
 export const router = createRouter({
   routeTree,
