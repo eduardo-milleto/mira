@@ -21,8 +21,12 @@ export const sessionQueryOptions = {
       const { user } = await api.get<AuthResponse>("/auth/me");
       return user;
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) return null;
-      throw err;
+      // qualquer falha na checagem de sessao (401, rede, API fora) = nao logado.
+      // assim a app degrada pro /login em vez de quebrar a tela toda.
+      if (!(err instanceof ApiError && err.status === 401)) {
+        console.warn("checagem de sessao falhou, tratando como deslogado:", err);
+      }
+      return null;
     }
   },
 };
