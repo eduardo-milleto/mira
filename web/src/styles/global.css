@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-bg text-heading antialiased;
+    font-family: theme("fontFamily.sans");
+    /* ss01 imita o set estilistico da Stripe quando a fonte suportar */
+    font-feature-settings: "ss01", "cv01";
+  }
+
+  /* headings leves e apertados, no espirito da Stripe */
+  h1,
+  h2,
+  h3 {
+    @apply font-light tracking-tighter text-heading;
+  }
+}
+
+@layer utilities {
+  /* numerais tabulares pra qualquer valor monetario */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+}

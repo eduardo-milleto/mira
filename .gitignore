@@ -1,0 +1,32 @@
+# dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# builds
+dist/
+build/
+.vercel/
+.output/
+
+# ambiente
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+
+# prisma
+api/prisma/*.db
+
+# editor / SO
+.DS_Store
+.idea/
+.vscode/
+*.local
+
+# misc
+coverage/
+.cache/
