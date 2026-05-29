@@ -3,9 +3,6 @@ import type { LucideIcon } from "lucide-react";
 
 export type BreakdownItem = { name: string; value: number; percent: number };
 
-// total de ganhos do mes (planilha, itens em azul) — usado como entrada do calculo de insights
-export const monthlyIncome = 24870;
-
 // patrimonio = soma das reservas/investimentos (planilha, tabela Investimentos)
 export const netWorth = 634500;
 export const assetBreakdown: BreakdownItem[] = [
