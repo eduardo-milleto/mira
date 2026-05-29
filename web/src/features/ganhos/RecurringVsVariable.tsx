@@ -1,10 +1,9 @@
-import { TrendingUp } from "lucide-react";
 import { formatBRL, formatPct } from "../../lib/format";
 import { recurring, variable } from "./data";
 
-type Item = { label: string; value: number; percent: number; delta: number };
+type Item = { label: string; value: number; percent: number };
 
-function Column({ label, value, percent, delta }: Item) {
+function Column({ label, value, percent }: Item) {
   return (
     <div className="min-w-0 flex-1">
       <p className="text-sm text-muted">{label}</p>
@@ -17,10 +16,6 @@ function Column({ label, value, percent, delta }: Item) {
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
         <div className="h-full rounded-full bg-brand-gradient" style={{ width: `${percent}%` }} />
       </div>
-      <p className="tnum mt-3 flex items-center gap-1 text-xs text-positive">
-        <TrendingUp className="h-3 w-3" />
-        {formatPct(delta)} vs mês anterior
-      </p>
     </div>
   );
 }
