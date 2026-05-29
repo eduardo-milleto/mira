@@ -8,6 +8,7 @@ dist/
 build/
 .vercel/
 .output/
+*.tsbuildinfo
 
 # ambiente
 .env
