@@ -61,6 +61,79 @@ export function useDeleteInvestment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.del<null>(`/investimentos/investments/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: investmentsKey }),
+    onSuccess: () => {
+      // ao excluir o ativo, os movimentos de aporte/resgate do cofre ficam avulsos (FK SetNull)
+      qc.invalidateQueries({ queryKey: investmentsKey });
+      qc.invalidateQueries({ queryKey: ["cofre"] });
+      qc.invalidateQueries({ queryKey: ["insights"] });
+    },
   });
+}
+
+// --- eventos (linha do tempo) ---
+
+export type InvestmentEventType =
+  | "saldo_inicial"
+  | "aporte"
+  | "rendimento"
+  | "resgate"
+  | "valorizacao"
+  | "depreciacao";
+
+export type InvestmentEvent = {
+  id: string;
+  type: InvestmentEventType;
+  delta: number;
+  notes: string | null;
+  occurredAt: string; // "YYYY-MM-DD"
+  cofreMovementId: string | null;
+  valueAfter: number; // valor do ativo apos o evento (calculado no backend)
+  createdAt: string;
+};
+
+// value = valor movimentado (aporte/resgate) ou novo valor atual (rendimento/valorizacao/depreciacao)
+export type InvestmentEventInput = {
+  type: Exclude<InvestmentEventType, "saldo_inicial">;
+  value: number;
+  occurredAt: string;
+  notes?: string;
+};
+
+export const investmentEventsKey = ["investment-events"] as const;
+
+export function useInvestmentEvents(investmentId: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: [...investmentEventsKey, investmentId],
+    queryFn: () =>
+      api
+        .get<{ events: InvestmentEvent[] }>(`/investimentos/investments/${investmentId}/events`)
+        .then((r) => r.events),
+    enabled: enabled && !!investmentId,
+  });
+}
+
+// evento mexe no valor do ativo, no cofre (aporte/resgate) e na projecao — invalida todos
+function useEventMutation<T>(fn: (vars: T) => Promise<unknown>) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: investmentsKey });
+      qc.invalidateQueries({ queryKey: investmentEventsKey });
+      qc.invalidateQueries({ queryKey: ["cofre"] });
+      qc.invalidateQueries({ queryKey: ["insights"] });
+    },
+  });
+}
+
+export function useCreateInvestmentEvent() {
+  return useEventMutation(({ investmentId, input }: { investmentId: string; input: InvestmentEventInput }) =>
+    api.post<{ event: InvestmentEvent }>(`/investimentos/investments/${investmentId}/events`, input),
+  );
+}
+
+export function useDeleteInvestmentEvent() {
+  return useEventMutation(({ investmentId, eventId }: { investmentId: string; eventId: string }) =>
+    api.del<null>(`/investimentos/investments/${investmentId}/events/${eventId}`),
+  );
 }

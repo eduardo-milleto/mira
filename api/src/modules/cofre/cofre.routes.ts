@@ -190,6 +190,16 @@ export async function cofreRoutes(app: FastifyInstance) {
     if (!parsed.success) {
       return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Dados invalidos" });
     }
+    // movimento de aporte/resgate (tem investmentId) e gerido pelo investimento, nao aqui
+    const existing = await prisma.cofreMovement.findFirst({
+      where: { id, userId: request.user.sub },
+    });
+    if (!existing) {
+      return reply.code(404).send({ error: "Movimentacao nao encontrada" });
+    }
+    if (existing.investmentId) {
+      return reply.code(409).send({ error: "Aporte/resgate e gerido pela tela de investimentos" });
+    }
     const { direction, occurredAt, notes, ...rest } = parsed.data;
     const data = {
       ...rest,
@@ -217,6 +227,16 @@ export async function cofreRoutes(app: FastifyInstance) {
 
   app.delete("/movements/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
+    // aporte/resgate (com investmentId) so pode ser desfeito pela tela de investimentos
+    const existing = await prisma.cofreMovement.findFirst({
+      where: { id, userId: request.user.sub },
+    });
+    if (!existing) {
+      return reply.code(404).send({ error: "Movimentacao nao encontrada" });
+    }
+    if (existing.investmentId) {
+      return reply.code(409).send({ error: "Aporte/resgate e gerido pela tela de investimentos" });
+    }
     const result = await prisma.cofreMovement.deleteMany({
       where: { id, userId: request.user.sub },
     });

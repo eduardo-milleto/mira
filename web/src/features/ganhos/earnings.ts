@@ -5,34 +5,56 @@ const PALETTE = ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#ec4899", "#14b8a6
 
 export type EarningsSlice = { name: string; value: number; percent: number; color: string };
 
-// monta os ganhos do mes a partir das fontes de renda reais.
-// renda "ativa" = ja vigente (sem startYear ou com startYear no passado/ano atual);
-// renda "futura" = comeca num ano a frente. so a ativa entra no total do mes.
-export function buildEarnings(incomes: IncomeSource[], currentYear: number) {
-  const isActive = (i: IncomeSource) => i.startYear == null || i.startYear <= currentYear;
-  const active = incomes.filter(isActive);
-  const future = incomes.filter((i) => !isActive(i));
+// projeta o valor mensal de uma fonte num ano alvo, respeitando:
+// - inicio futuro (startYear): antes disso a fonte ainda nao rende;
+// - crescimento anual (annualGrowthPct): juros compostos ano a ano;
+// - valores definidos (steps): fixam o valor naquele ano e o crescimento volta a contar a partir dele.
+export function monthlyIncomeForYear(income: IncomeSource, year: number, currentYear: number): number {
+  // ano em que o valor-base (monthlyAmount) vale: hoje, ou o ano de inicio da renda futura
+  const baseYear = income.startYear ?? currentYear;
+  // fonte futura ainda nao rende antes de comecar
+  if (year < baseYear) return 0;
 
-  const total = active.reduce((sum, i) => sum + i.monthlyAmount, 0);
-  const futureTotal = future.reduce((sum, i) => sum + i.monthlyAmount, 0);
-  const combined = total + futureTotal;
+  // pontos de valor conhecido (base + steps); cada step sobrescreve o crescimento a partir do seu ano
+  const knownPoints = [
+    { year: baseYear, amount: income.monthlyAmount },
+    ...income.steps.map((s) => ({ year: s.year, amount: s.monthlyAmount })),
+  ];
+  // ancora = ponto conhecido mais recente que nao passa do ano alvo (sempre existe: baseYear <= year aqui)
+  const anchor = knownPoints
+    .filter((p) => p.year <= year)
+    .reduce((latest, p) => (p.year > latest.year ? p : latest));
 
-  // fatias ordenadas (maior pra menor) pra composicao e principais fontes
-  const slices: EarningsSlice[] = active
-    .slice()
-    .sort((a, b) => b.monthlyAmount - a.monthlyAmount)
-    .map((i, idx) => ({
-      name: i.name,
-      value: i.monthlyAmount,
-      percent: total > 0 ? (i.monthlyAmount / total) * 100 : 0,
+  // a partir da ancora, cresce pelo percentual anual ate o ano alvo
+  return anchor.amount * Math.pow(1 + income.annualGrowthPct / 100, year - anchor.year);
+}
+
+// monta os ganhos a partir das fontes de renda reais.
+// "ativa agora" = renda mensal vigente no ano atual;
+// "futura" = renda mensal total projetada para o ano selecionado (atuais crescendo + steps + rendas que comecam ate la).
+export function buildEarnings(incomes: IncomeSource[], currentYear: number, futureYear: number) {
+  // renda mensal por fonte hoje (fontes futuras ainda valem 0 no ano atual)
+  const current = incomes.map((i) => ({ income: i, value: monthlyIncomeForYear(i, currentYear, currentYear) }));
+  const total = current.reduce((sum, c) => sum + c.value, 0);
+
+  // renda total projetada no ano selecionado
+  const futureTotal = incomes.reduce((sum, i) => sum + monthlyIncomeForYear(i, futureYear, currentYear), 0);
+
+  // composicao e principais fontes usam a renda ativa de hoje, ordenada da maior pra menor
+  const slices: EarningsSlice[] = current
+    .filter((c) => c.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .map((c, idx) => ({
+      name: c.income.name,
+      value: c.value,
+      percent: total > 0 ? (c.value / total) * 100 : 0,
       color: PALETTE[idx % PALETTE.length],
     }));
 
   return {
     total,
     slices,
-    // colunas "ativa vs futura": percentual relativo ao total ativa + futura
-    activeColumn: { value: total, percent: combined > 0 ? (total / combined) * 100 : 0 },
-    futureColumn: { value: futureTotal, percent: combined > 0 ? (futureTotal / combined) * 100 : 0 },
+    activeValue: total,
+    futureValue: futureTotal,
   };
 }
