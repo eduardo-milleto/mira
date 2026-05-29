@@ -2,7 +2,7 @@ import { insightsResponseSchema, type InsightsRequest, type InsightsResponse } f
 
 const MODEL = "gemini-2.5-flash";
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-const TIMEOUT_MS = 20000;
+const TIMEOUT_MS = 30000;
 
 // schema no formato do Gemini (subset do OpenAPI) pra forcar saida JSON estruturada
 const responseSchema = {
@@ -74,6 +74,9 @@ export async function generateInsights(
           responseMimeType: "application/json",
           responseSchema,
           temperature: 0.2,
+          // desliga o "thinking" do 2.5-flash: pro nosso calculo estruturado nao precisa
+          // de raciocinio e corta muita latencia (evita o timeout)
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
       signal: controller.signal,
