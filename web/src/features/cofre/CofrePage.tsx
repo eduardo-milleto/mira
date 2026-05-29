@@ -15,6 +15,7 @@ const SOURCE_LABEL: Record<string, string> = {
   gasto_extra: "Gasto extra",
   ajuste: "Ajuste",
   aporte: "Aporte",
+  resgate: "Resgate",
 };
 
 // "2026-05-29" -> "29 mai" (meia-dia local evita o shift de fuso ao formatar)
@@ -116,24 +117,29 @@ export function CofrePage() {
                     {isEntrada ? "+" : "−"}
                     {formatBRL(m.amount)}
                   </span>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(m)}
-                      className={cn(actionBtn, "hover:text-heading")}
-                      aria-label="Editar movimentação"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setToDelete(m)}
-                      className={cn(actionBtn, "hover:text-negative")}
-                      aria-label="Excluir movimentação"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+                  {/* aporte/resgate (com investmentId) sao geridos na tela de investimentos */}
+                  {m.investmentId ? (
+                    <span className="shrink-0 text-xs text-faint">via investimento</span>
+                  ) : (
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(m)}
+                        className={cn(actionBtn, "hover:text-heading")}
+                        aria-label="Editar movimentação"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setToDelete(m)}
+                        className={cn(actionBtn, "hover:text-negative")}
+                        aria-label="Excluir movimentação"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })

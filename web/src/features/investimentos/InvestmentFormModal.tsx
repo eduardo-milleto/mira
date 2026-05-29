@@ -7,6 +7,7 @@ import { MoneyInput } from "../../components/ui/MoneyInput";
 import { PercentInput } from "../../components/ui/PercentInput";
 import { ComboboxField } from "../../components/ui/Combobox";
 import { cn } from "../../lib/cn";
+import { formatBRL } from "../../lib/format";
 import { categoriesForKind } from "./categories";
 import {
   useCreateInvestment,
@@ -53,26 +54,26 @@ export function InvestmentFormModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, investment]);
 
-  const valid = name.trim().length > 0 && category.trim().length > 0 && value > 0;
+  // na edicao o valor nao entra (so muda via eventos na linha do tempo), entao nao exige valor
+  const valid = name.trim().length > 0 && category.trim().length > 0 && (!!investment || value > 0);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!valid || pending) return;
-    const input = {
-      // mantem o tipo do item em edicao; na criacao usa o tipo da pagina
-      kind: investment?.kind ?? kind,
+    const meta = {
       name: name.trim(),
       category: category.trim(),
-      value,
       // vazio = deixa a IA inferir a rentabilidade pela categoria/notes
       expectedReturnPct: expectedReturnPct !== 0 ? expectedReturnPct : null,
       notes: notes.trim() ? notes.trim() : null,
     };
     const onSuccess = () => onOpenChange(false);
     if (investment) {
-      update.mutate({ id: investment.id, input }, { onSuccess });
+      // edicao mexe so nos metadados; o valor evolui pelos eventos (aporte/rendimento/...)
+      update.mutate({ id: investment.id, input: meta }, { onSuccess });
     } else {
-      create.mutate(input, { onSuccess });
+      // criacao define o valor inicial (vira o evento "saldo inicial" no backend)
+      create.mutate({ kind, value, ...meta }, { onSuccess });
     }
   }
 
@@ -105,7 +106,14 @@ export function InvestmentFormModal({
           onChange={setCategory}
           placeholder="Escolha ou digite a categoria"
         />
-        <MoneyInput label="Valor atual" value={value} onChange={setValue} />
+        {investment ? (
+          <p className="rounded-xl border border-border bg-surface-2/50 px-4 py-3 text-xs text-faint">
+            O valor atual ({formatBRL(investment.value)}) muda pelas movimentações na linha do
+            tempo do ativo, não por aqui.
+          </p>
+        ) : (
+          <MoneyInput label="Valor atual" value={value} onChange={setValue} />
+        )}
         <PercentInput
           label={
             isPatrimony
