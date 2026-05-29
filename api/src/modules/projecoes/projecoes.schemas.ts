@@ -15,12 +15,21 @@ const pct = z
 // ano de inicio de uma renda futura (faixa generosa pra nao limitar o planejamento)
 const year = z.number().int().min(2020).max(2100);
 
+// valor mensal definido pra um ano futuro (sobrescreve o crescimento percentual)
+const incomeStep = z.object({
+  year,
+  monthlyAmount: money,
+});
+const steps = z.array(incomeStep).max(50, "Maximo de 50 valores futuros");
+
 // --- fontes de renda ---
 export const incomeCreateSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome").max(80),
   monthlyAmount: money,
   annualGrowthPct: pct.optional().default(0),
-  startYear: year.optional(),
+  // aceita null (renda nao-futura) alem de ausente
+  startYear: year.nullable().optional(),
+  steps: steps.optional().default([]),
 });
 
 // no update tudo opcional, mas precisa vir pelo menos um campo.
@@ -31,6 +40,7 @@ export const incomeUpdateSchema = z
     monthlyAmount: money,
     annualGrowthPct: pct,
     startYear: year.nullable(),
+    steps,
   })
   .partial()
   .refine((d) => Object.keys(d).length > 0, "Nada para atualizar");

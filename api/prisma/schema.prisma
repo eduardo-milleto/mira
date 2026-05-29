@@ -20,6 +20,10 @@ model User {
   incomeSources      IncomeSource[]
   investments        Investment[]
   projectionSettings ProjectionSettings?
+  personalExpenses   PersonalExpense[]
+  categoryLimits     CategoryLimit[]
+  spendingProfile    SpendingProfile?
+  advisorMessages    AdvisorMessage[]
 
   @@map("users")
 }
@@ -58,18 +62,34 @@ model CreditCard {
 // fonte de renda do usuario usada nas projecoes; itens com startYear no futuro
 // sao "novas rendas" que so passam a contar a partir daquele ano
 model IncomeSource {
-  id              String   @id @default(uuid())
+  id              String       @id @default(uuid())
   userId          String
   name            String // ex: "Salario", "Aluguel + Empresa"
-  monthlyAmount   Decimal  @db.Decimal(12, 2)
-  annualGrowthPct Decimal  @default(0) @db.Decimal(5, 2) // crescimento esperado ao ano
+  monthlyAmount   Decimal      @db.Decimal(12, 2)
+  annualGrowthPct Decimal      @default(0) @db.Decimal(5, 2) // crescimento esperado ao ano
   startYear       Int? // null = ja ativa; ano futuro = renda que ainda vai comecar
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  steps           IncomeStep[]
 
   @@index([userId])
   @@map("income_sources")
+}
+
+// valor mensal definido pra um ano futuro especifico (ex: salario sobe pra X em 2027).
+// sobrescreve o crescimento percentual a partir daquele ano. editavel pela tela de Ganhos
+model IncomeStep {
+  id             String       @id @default(uuid())
+  incomeSourceId String
+  year           Int
+  monthlyAmount  Decimal      @db.Decimal(12, 2)
+  createdAt      DateTime     @default(now())
+  income         IncomeSource @relation(fields: [incomeSourceId], references: [id], onDelete: Cascade)
+
+  @@unique([incomeSourceId, year])
+  @@index([incomeSourceId])
+  @@map("income_steps")
 }
 
 // ativo que compoe o patrimonio do usuario; classificado por categoria (texto livre).
@@ -101,4 +121,63 @@ model ProjectionSettings {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("projection_settings")
+}
+
+// gasto pessoal/discricionario: cada compra e uma linha datada com categoria.
+// soma do mes corrente entra no gasto mensal e e o que a consultora IA analisa.
+model PersonalExpense {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String // ex: "iFood", "Tenis Nike"
+  category  String // categoria discricionaria (Lazer, Delivery, Compras, etc)
+  amount    Decimal  @db.Decimal(12, 2)
+  spentAt   DateTime @db.Date // data da compra (sem horario; usada pra somar por mes)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, spentAt])
+  @@map("personal_expenses")
+}
+
+// limite mensal por categoria de gasto pessoal. source diz se foi a IA que sugeriu
+// ou o usuario que definiu/ajustou. 1 limite por categoria por usuario.
+model CategoryLimit {
+  id        String   @id @default(uuid())
+  userId    String
+  category  String
+  amount    Decimal  @db.Decimal(12, 2) // teto mensal
+  source    String   @default("user") // "user" | "ai"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+  @@map("category_limits")
+}
+
+// contexto/gatilhos que o usuario escreve pra IA considerar (1 linha por usuario).
+// opcional: a IA tambem infere padroes pelo proprio log de compras.
+model SpendingProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  triggers  String   @db.Text // texto livre: gatilhos, objetivos, contexto do periodo
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("spending_profiles")
+}
+
+// historico do chat com a consultora IA (uma linha por mensagem, user ou assistant)
+model AdvisorMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  role      String // "user" | "assistant"
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("advisor_messages")
 }

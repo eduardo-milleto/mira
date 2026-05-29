@@ -8,6 +8,7 @@ import { useCreditCards, useExpenses } from "../gastos/gastos.api";
 import { buildSpending } from "../gastos/spending";
 import { useInvestments } from "../investimentos/investimentos.api";
 import { buildPatrimony } from "../investimentos/patrimony";
+import { usePersonalSummary } from "../gastos-pessoais/personal.api";
 import { HeroCard } from "./HeroCard";
 import { ProjectionChart } from "./ProjectionChart";
 import { BreakdownList } from "./BreakdownList";
@@ -29,8 +30,13 @@ export function OverviewPage() {
   const { data: user } = useSession();
   const expensesQuery = useExpenses(!!user);
   const cardsQuery = useCreditCards(!!user);
-  const spendingLoading = expensesQuery.isLoading || cardsQuery.isLoading;
-  const spending = buildSpending(expensesQuery.data ?? [], cardsQuery.data ?? []);
+  const personalQuery = usePersonalSummary(!!user);
+  const spendingLoading = expensesQuery.isLoading || cardsQuery.isLoading || personalQuery.isLoading;
+  const spending = buildSpending(
+    expensesQuery.data ?? [],
+    cardsQuery.data ?? [],
+    personalQuery.data?.monthTotal ?? 0,
+  );
 
   const investmentsQuery = useInvestments(!!user);
   const patrimony = buildPatrimony(investmentsQuery.data ?? []);

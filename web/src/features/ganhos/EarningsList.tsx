@@ -75,6 +75,11 @@ export function EarningsList() {
                       a partir de {income.startYear}
                     </span>
                   )}
+                  {income.steps.length > 0 && (
+                    <span className="rounded-full bg-white/5 px-2 py-0.5 text-muted">
+                      {income.steps.length} {income.steps.length === 1 ? "valor futuro" : "valores futuros"}
+                    </span>
+                  )}
                 </div>
               </div>
               <span className="tnum shrink-0 text-sm text-heading">

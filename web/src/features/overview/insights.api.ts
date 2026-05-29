@@ -6,6 +6,7 @@ import { buildSpending } from "../gastos/spending";
 import { useIncomes, useProjectionSettings } from "../projecoes/projecoes.api";
 import { useInvestments } from "../investimentos/investimentos.api";
 import { buildPatrimony } from "../investimentos/patrimony";
+import { usePersonalSummary } from "../gastos-pessoais/personal.api";
 
 export type EvolutionStep = { label: string; percent: number; status: string };
 export type ProjectionPoint = { year: string; value: number };
@@ -27,6 +28,7 @@ export type IncomeSourceInput = {
   monthlyAmount: number;
   annualGrowthPct: number;
   startYear: number | null;
+  steps: { year: number; monthlyAmount: number }[];
 };
 export type InvestmentInput = {
   name: string;
@@ -69,14 +71,20 @@ export function useInsightsData() {
   const incomesQuery = useIncomes(!!user);
   const settingsQuery = useProjectionSettings(!!user);
   const investmentsQuery = useInvestments(!!user);
+  const personalQuery = usePersonalSummary(!!user);
   const loading =
     expensesQuery.isLoading ||
     cardsQuery.isLoading ||
     incomesQuery.isLoading ||
     settingsQuery.isLoading ||
-    investmentsQuery.isLoading;
+    investmentsQuery.isLoading ||
+    personalQuery.isLoading;
 
-  const spending = buildSpending(expensesQuery.data ?? [], cardsQuery.data ?? []);
+  const spending = buildSpending(
+    expensesQuery.data ?? [],
+    cardsQuery.data ?? [],
+    personalQuery.data?.monthTotal ?? 0,
+  );
   const incomes = incomesQuery.data ?? [];
   const settings = settingsQuery.data;
   const investments = investmentsQuery.data ?? [];
@@ -99,6 +107,7 @@ export function useInsightsData() {
       monthlyAmount: i.monthlyAmount,
       annualGrowthPct: i.annualGrowthPct,
       startYear: i.startYear,
+      steps: i.steps,
     })),
     investments: investments.map((i) => ({
       name: i.name,

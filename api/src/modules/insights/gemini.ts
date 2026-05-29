@@ -64,9 +64,16 @@ function formatBreakdown(items: { name: string; value: number }[]): string {
   return items.map((i) => `- ${i.name}: R$ ${i.value}`).join("\n");
 }
 
-// descreve cada fonte de renda com sua premissa de crescimento e, se futura, o ano de inicio
+// descreve cada fonte de renda: premissa de crescimento, ano de inicio (se futura)
+// e os valores definidos pra anos especificos (que sobrescrevem o crescimento naquele ano)
 function formatIncomes(
-  items: { name: string; monthlyAmount: number; annualGrowthPct: number; startYear?: number | null }[],
+  items: {
+    name: string;
+    monthlyAmount: number;
+    annualGrowthPct: number;
+    startYear?: number | null;
+    steps?: { year: number; monthlyAmount: number }[];
+  }[],
   currentYear: number,
 ): string {
   if (!items.length) return "(nao informado)";
@@ -77,7 +84,14 @@ function formatIncomes(
         i.startYear && i.startYear > currentYear
           ? `, comeca em ${i.startYear} (renda futura)`
           : "";
-      return `- ${i.name}: R$ ${i.monthlyAmount}/mes (${growth})${when}`;
+      const steps = i.steps?.length
+        ? `; valores definidos: ${i.steps
+            .slice()
+            .sort((a, b) => a.year - b.year)
+            .map((s) => `em ${s.year} passa a R$ ${s.monthlyAmount}/mes`)
+            .join(", ")}`
+        : "";
+      return `- ${i.name}: R$ ${i.monthlyAmount}/mes (${growth})${when}${steps}`;
     })
     .join("\n");
 }
@@ -135,7 +149,7 @@ function buildPrompt(input: InsightsRequest, currentYear: number): string {
     "2. status: rotulo curto (ex: 'Critica', 'Atencao', 'Boa', 'Muito boa', 'Excelente').",
     "3. insight: uma unica frase curta de recomendacao pratica.",
     "4. steps: exatamente 4 marcos de evolucao [{label, percent, status}]. O primeiro deve ser 'Hoje' com percent = healthScore; os outros 3 sao metas crescentes ate 'Liberdade financeira' com percent 100.",
-    `5. projection: patrimonio projetado para ${horizon} anos [{year, value}], um ponto por ano de ${currentYear} a ${endYear}. O patrimonio inicial JA E a soma dos investimentos listados acima; faca CADA ativo crescer pela sua taxa esperada (ou, quando ausente, uma taxa realista que voce inferir pela categoria/notes do ativo). A sobra mensal (renda - gastos) e um APORTE NOVO que entra ao longo dos anos e rende a ${returnRate}. Some o rendimento do estoque de ativos com os aportes novos — eles se SOMAM, NUNCA se sobrepoem (nao conte a sobra investida duas vezes). Faca tambem cada fonte de renda crescer pelo seu percentual ao ano e some as rendas futuras a partir do ano de inicio delas.`,
+    `5. projection: patrimonio projetado para ${horizon} anos [{year, value}], um ponto por ano de ${currentYear} a ${endYear}. O patrimonio inicial JA E a soma dos investimentos listados acima; faca CADA ativo crescer pela sua taxa esperada (ou, quando ausente, uma taxa realista que voce inferir pela categoria/notes do ativo). A sobra mensal (renda - gastos) e um APORTE NOVO que entra ao longo dos anos e rende a ${returnRate}. Some o rendimento do estoque de ativos com os aportes novos — eles se SOMAM, NUNCA se sobrepoem (nao conte a sobra investida duas vezes). Faca tambem cada fonte de renda crescer pelo seu percentual ao ano e some as rendas futuras a partir do ano de inicio delas. Quando uma renda tiver "valores definidos" para anos especificos, use exatamente esse valor naquele ano em diante (ele sobrescreve o crescimento percentual ate o proximo valor definido; depois volta a crescer pelo percentual).`,
     "6. projectionExplanation: explique em detalhe (2 a 4 frases) como essa projecao foi calculada — as premissas (rendimento de cada investimento, crescimento de cada renda, rendas futuras, sobra mensal investida, taxa de rendimento), o que mais influencia o resultado e o que o usuario pode fazer pra melhorar a curva.",
     "7. recommendations: de 3 a 5 recomendacoes praticas e ESPECIFICAS, citando as categorias reais de gasto/patrimonio/renda listadas acima (ex: renegociar/cortar uma categoria especifica de gasto, acelerar uma renda futura, realocar um ativo concreto). Cada uma com: title (curto), description (acao concreta e o porque, com numeros quando possivel), priority ('alta', 'media' ou 'baixa'). Nada generico.",
   ].join("\n");
