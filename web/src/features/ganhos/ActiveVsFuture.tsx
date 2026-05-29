@@ -1,9 +1,8 @@
 import { formatBRL, formatPct } from "../../lib/format";
-import { recurring, variable } from "./data";
 
-type Item = { label: string; value: number; percent: number };
+type Item = { value: number; percent: number };
 
-function Column({ label, value, percent }: Item) {
+function Column({ label, value, percent }: { label: string } & Item) {
   return (
     <div className="min-w-0 flex-1">
       <p className="text-sm text-muted">{label}</p>
@@ -20,11 +19,12 @@ function Column({ label, value, percent }: Item) {
   );
 }
 
-export function RecurringVsVariable() {
+// renda que ja esta vigente vs renda que so comeca num ano futuro (campo startYear)
+export function ActiveVsFuture({ active, future }: { active: Item; future: Item }) {
   return (
     <div className="flex gap-6">
-      <Column label="Recorrente" {...recurring} />
-      <Column label="Variável" {...variable} />
+      <Column label="Ativa agora" {...active} />
+      <Column label="Futura" {...future} />
     </div>
   );
 }

@@ -1,8 +1,7 @@
 import { Info, TrendingUp } from "lucide-react";
 import { formatBRL } from "../../lib/format";
-import { totalThisMonth } from "./data";
 
-export function EarningsHero() {
+export function EarningsHero({ total }: { total: number }) {
   return (
     <section className="relative overflow-hidden rounded-2xl border border-border">
       <video
@@ -33,7 +32,7 @@ export function EarningsHero() {
             </p>
             <div className="mt-2 flex items-center gap-6">
               <p className="tnum text-4xl font-light tracking-tighter text-heading">
-                {formatBRL(totalThisMonth)}
+                {formatBRL(total)}
               </p>
               <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-brand/40 text-brand shadow-glow">
                 <TrendingUp className="h-7 w-7" />
