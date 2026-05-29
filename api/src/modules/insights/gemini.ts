@@ -96,7 +96,7 @@ function formatIncomes(
     .join("\n");
 }
 
-// descreve cada investimento com sua premissa de rendimento por ativo (ou taxa a inferir)
+// descreve cada investimento com sua premissa de rendimento por ativo; sem taxa = nao rende
 function formatInvestments(
   items: { name: string; category: string; value: number; expectedReturnPct?: number | null; notes?: string | null }[],
 ): string {
@@ -106,7 +106,7 @@ function formatInvestments(
       const rate =
         i.expectedReturnPct != null
           ? `rende ${i.expectedReturnPct}% ao ano`
-          : "taxa a inferir pela categoria";
+          : "sem taxa informada: NAO rende (0% ao ano)";
       const notes = i.notes ? ` — ${i.notes}` : "";
       return `- ${i.name} [${i.category}]: R$ ${i.value} (${rate})${notes}`;
     })
@@ -152,7 +152,7 @@ function buildPrompt(input: InsightsRequest, currentYear: number): string {
     "Fontes de renda (contexto pra saude financeira e recomendacoes):",
     formatIncomes(input.incomeSources, currentYear),
     "",
-    "Investimentos (taxa = rentabilidade REALIZADA do historico quando existe; senao, a inferir):",
+    "Investimentos (taxa = rentabilidade REALIZADA do historico quando existe; senao, a informada manualmente; sem nenhuma das duas, o ativo NAO rende — NAO invente taxa):",
     formatInvestments(input.investments),
     "",
     "Fechamentos de mes (app calculou x usuario confirmou; a diferenca revela ganho/gasto FORA do app):",
@@ -167,7 +167,7 @@ function buildPrompt(input: InsightsRequest, currentYear: number): string {
     "2. status: rotulo curto (ex: 'Critica', 'Atencao', 'Boa', 'Muito boa', 'Excelente').",
     "3. insight: uma unica frase curta de recomendacao pratica.",
     "4. steps: exatamente 4 marcos de evolucao [{label, percent, status}]. O primeiro deve ser 'Hoje' com percent = healthScore; os outros 3 sao metas crescentes ate 'Liberdade financeira' com percent 100.",
-    `5. projection: patrimonio projetado para ${horizon} anos [{year, value}], um ponto por ano de ${currentYear} a ${endYear}. O patrimonio inicial JA E a soma dos investimentos listados acima. Faca CADA ativo crescer SOMENTE pela sua taxa (a informada e a realizada do historico; quando ausente, infira uma taxa realista pela categoria/notes). NAO injete a sobra mensal nem o saldo do cofre como aporte automatico — o usuario NAO reinveste sozinho, entao esse dinheiro fica parado, nao entra na curva do patrimonio e nao rende. A projecao cresce APENAS pelo rendimento dos proprios ativos; se o usuario nao aportar, ela cresce devagar de proposito (retrato honesto de nao reinvestir).`,
+    `5. projection: patrimonio projetado para ${horizon} anos [{year, value}], um ponto por ano de ${currentYear} a ${endYear}. O patrimonio inicial JA E a soma dos investimentos listados acima. Faca CADA ativo crescer SOMENTE pela sua taxa (a realizada do historico ou a informada manualmente); quando o ativo NAO tem taxa, ele NAO rende (0% ao ano) — NUNCA infira nem chute uma taxa pela categoria/notes, mantenha o valor parado. NAO injete a sobra mensal nem o saldo do cofre como aporte automatico — o usuario NAO reinveste sozinho, entao esse dinheiro fica parado, nao entra na curva do patrimonio e nao rende. A projecao cresce APENAS pelo rendimento dos proprios ativos; se o usuario nao aportar, ela cresce devagar de proposito (retrato honesto de nao reinvestir).`,
     `6. projectionExplanation: explique (2 a 4 frases) que a curva cresce so pelo rendimento dos ativos (cite as taxas), que a sobra mensal NAO esta sendo reinvestida — fica parada no cofre (R$ ${input.cofreBalance}) sem render — e que pra acelerar o patrimonio o usuario precisa aportar esse dinheiro nos investimentos. Se os fechamentos de mes mostrarem diferencas, mencione o que isso revela (gasto/ganho fora do app).`,
     "7. recommendations: de 3 a 5 recomendacoes praticas e ESPECIFICAS, citando as categorias reais de gasto/patrimonio/renda. Se ha saldo parado no cofre, priorize recomendar aportar (quanto e em que tipo de ativo). Use os motivos dos fechamentos de mes pra apontar vazamentos fora do app. Cada uma com: title (curto), description (acao concreta e o porque, com numeros quando possivel), priority ('alta', 'media' ou 'baixa'). Nada generico.",
   ].join("\n");

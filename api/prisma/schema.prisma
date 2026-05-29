@@ -107,7 +107,7 @@ model Investment {
   name              String // ex: "Apto Centro", "Tesouro IPCA", "Carteira de acoes"
   category          String // classificacao livre (ex: "Imovel", "Renda fixa", "Trade")
   value             Decimal  @db.Decimal(12, 2) // valor atual
-  expectedReturnPct Decimal? @db.Decimal(5, 2) // % ao ano esperado; null = IA infere pela categoria/notes
+  expectedReturnPct Decimal? @db.Decimal(5, 2) // % ao ano esperado; null = ativo nao rende na projecao (0%), IA nao infere
   notes             String? // premissa livre por tipo de ativo (ex: "valoriza 8%/ano + aluguel")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

@@ -21,7 +21,7 @@ export const investmentCreateSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome").max(80),
   category: z.string().trim().min(1, "Informe a categoria").max(40),
   value: money,
-  // vazio (omitido ou null) = a IA infere pela categoria/notes
+  // vazio (omitido ou null) = ativo nao rende na projecao (0% ao ano); a IA nao infere taxa
   expectedReturnPct: pct.nullish(),
   notes: z.string().trim().max(500).nullish(),
 });
