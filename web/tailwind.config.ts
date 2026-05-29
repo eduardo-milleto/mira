@@ -47,17 +47,6 @@ export default {
       backgroundImage: {
         "brand-gradient": "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
       },
-      keyframes: {
-        // brilho que varre a moeda Mira uma vez
-        "coin-shine": {
-          "0%": { transform: "translateX(-120%)" },
-          "100%": { transform: "translateX(120%)" },
-        },
-      },
-      animation: {
-        // registrado aqui (e nao em CSS) pra variante motion-safe: funcionar
-        "coin-shine": "coin-shine 1.1s ease-out 0.15s 1 both",
-      },
     },
   },
   plugins: [],
