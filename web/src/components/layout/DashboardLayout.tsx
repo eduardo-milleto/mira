@@ -25,6 +25,7 @@ import { Logo } from "../Logo";
 import { useLogout, useSession } from "../../features/auth/auth.api";
 import { useCofre } from "../../features/cofre/cofre.api";
 import { CofreMonthCloseModal } from "../../features/cofre/CofreMonthCloseModal";
+import { HeaderCoinPill } from "../../features/cofre/HeaderCoinPill";
 
 type NavItem = { icon: LucideIcon; label: string; to?: string; exact?: boolean };
 
@@ -119,6 +120,7 @@ export function DashboardLayout() {
       <div className="flex flex-1 flex-col">
         <header className="flex items-center gap-4 border-b border-border px-6 py-4">
           <div className="ml-auto flex items-center gap-3">
+            {cofre && <HeaderCoinPill balance={cofre.balance} />}
             <button
               type="button"
               className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted transition hover:text-heading"
