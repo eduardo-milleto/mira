@@ -4,7 +4,7 @@ import { useSession } from "../auth/auth.api";
 import { useCreditCards, useExpenses } from "../gastos/gastos.api";
 import { buildSpending } from "../gastos/spending";
 import { useIncomes, useProjectionSettings } from "../projecoes/projecoes.api";
-import { useInvestments } from "../investimentos/investimentos.api";
+import { investmentKindOf, useInvestments, type InvestmentKind } from "../investimentos/investimentos.api";
 import { buildPatrimony } from "../investimentos/patrimony";
 import { usePersonalSummary } from "../gastos-pessoais/personal.api";
 
@@ -64,7 +64,9 @@ export function useInsights(input: InsightsInput, enabled = true) {
 
 // monta o input dos insights a partir do gasto real + fontes de renda + premissas (banco).
 // usado na Visao geral, Sugestoes IA e Projecoes — mesmo input = mesmo cache.
-export function useInsightsData() {
+// kindFilter limita os ativos considerados (ex: a Investimentos projeta so kind="investimento",
+// fora os bens de patrimonio); sem filtro, conta o patrimonio inteiro.
+export function useInsightsData(kindFilter?: InvestmentKind) {
   const { data: user } = useSession();
   const expensesQuery = useExpenses(!!user);
   const cardsQuery = useCreditCards(!!user);
@@ -87,7 +89,10 @@ export function useInsightsData() {
   );
   const incomes = incomesQuery.data ?? [];
   const settings = settingsQuery.data;
-  const investments = investmentsQuery.data ?? [];
+  const allInvestments = investmentsQuery.data ?? [];
+  const investments = kindFilter
+    ? allInvestments.filter((i) => investmentKindOf(i) === kindFilter)
+    : allInvestments;
   const patrimony = buildPatrimony(investments);
   const currentYear = new Date().getFullYear();
 
