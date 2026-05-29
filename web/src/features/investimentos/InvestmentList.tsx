@@ -113,6 +113,9 @@ export function InvestmentList({ kind }: { kind: InvestmentKind }) {
                 <div className="divide-y divide-border">
                   {group.items.map((inv) => {
                     const isOpen = expanded === inv.id;
+                    // taxa exibida: a realizada do histórico quando houver, senão a manual
+                    const rate = inv.realizedReturnPct ?? inv.expectedReturnPct;
+                    const rateRealized = inv.realizedReturnPct != null;
                     return (
                       <div key={inv.id}>
                         <div
@@ -127,12 +130,14 @@ export function InvestmentList({ kind }: { kind: InvestmentKind }) {
                           />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm text-heading">{inv.name}</p>
-                            {(inv.expectedReturnPct != null || inv.notes) && (
+                            {(rate != null || inv.notes) && (
                               <p className="truncate text-xs text-faint">
-                                {inv.expectedReturnPct != null && (
-                                  <span className="tnum">{inv.expectedReturnPct}% a.a.</span>
+                                {rate != null && (
+                                  <span className="tnum">
+                                    {rate}% a.a.{rateRealized ? " (realizado)" : ""}
+                                  </span>
                                 )}
-                                {inv.expectedReturnPct != null && inv.notes && " · "}
+                                {rate != null && inv.notes && " · "}
                                 {inv.notes}
                               </p>
                             )}

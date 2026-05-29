@@ -9,7 +9,8 @@ export type Investment = {
   name: string;
   category: string;
   value: number;
-  expectedReturnPct: number | null;
+  expectedReturnPct: number | null; // % manual (expectativa / fallback)
+  realizedReturnPct: number | null; // % anualizada do historico real (null = histórico curto)
   notes: string | null;
   createdAt: string;
 };

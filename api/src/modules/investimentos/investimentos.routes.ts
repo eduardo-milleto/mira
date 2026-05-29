@@ -55,16 +55,65 @@ function publicEvent(e: InvestmentEvent) {
   };
 }
 
+const MIN_DAYS_FOR_RATE = 60;
+const MARKET_TYPES = new Set(["rendimento", "valorizacao", "depreciacao"]);
+const CAPITAL_TYPES = new Set(["saldo_inicial", "aporte", "resgate"]);
+
+// rentabilidade realizada (anualizada simples): ganho de mercado (rendimentos/valorizacoes,
+// fora aportes/resgates) sobre o capital investido, anualizado pelo tempo desde o 1o evento.
+// devolve null quando o historico e curto/insuficiente — ai o front cai no expectedReturnPct
+// manual. o clamp evita taxas absurdas vindas de amostras de poucos dias.
+function computeRealizedRate(events: InvestmentEvent[], now: Date): number | null {
+  if (events.length === 0) return null;
+  let investedCapital = 0;
+  let marketGrowth = 0;
+  let hasMarket = false;
+  for (const e of events) {
+    const d = e.delta.toNumber();
+    if (MARKET_TYPES.has(e.type)) {
+      marketGrowth += d;
+      hasMarket = true;
+    } else if (CAPITAL_TYPES.has(e.type)) {
+      investedCapital += d;
+    }
+  }
+  if (!hasMarket || investedCapital <= 0) return null;
+  const elapsedDays = (now.getTime() - events[0].occurredAt.getTime()) / 86_400_000;
+  if (elapsedDays < MIN_DAYS_FOR_RATE) return null;
+  const annual = (marketGrowth / investedCapital) * (365 / elapsedDays) * 100;
+  const clamped = Math.max(-95, Math.min(300, annual));
+  return Math.round(clamped * 100) / 100;
+}
+
 export async function investimentosRoutes(app: FastifyInstance) {
   // todas as rotas exigem sessao valida
   app.addHook("preHandler", authenticate);
 
   app.get("/investments", async (request, reply) => {
+    const userId = request.user.sub;
     const investments = await prisma.investment.findMany({
-      where: { userId: request.user.sub },
+      where: { userId },
       orderBy: { createdAt: "desc" },
     });
-    return reply.send({ investments: investments.map(publicInvestment) });
+    // eventos de todos os ativos numa query so, agrupados por ativo, pra calcular a taxa
+    // realizada de cada um (anualizada simples)
+    const events = await prisma.investmentEvent.findMany({
+      where: { userId },
+      orderBy: [{ occurredAt: "asc" }, { createdAt: "asc" }],
+    });
+    const byInvestment = new Map<string, InvestmentEvent[]>();
+    for (const e of events) {
+      const list = byInvestment.get(e.investmentId);
+      if (list) list.push(e);
+      else byInvestment.set(e.investmentId, [e]);
+    }
+    const now = new Date();
+    return reply.send({
+      investments: investments.map((i) => ({
+        ...publicInvestment(i),
+        realizedReturnPct: computeRealizedRate(byInvestment.get(i.id) ?? [], now),
+      })),
+    });
   });
 
   app.post("/investments", async (request, reply) => {
