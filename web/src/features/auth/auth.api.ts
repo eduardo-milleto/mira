@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, api } from "../../lib/api";
+import { persister } from "../../lib/queryClient";
 
 export type User = {
   id: string;
@@ -41,7 +42,11 @@ export function useLogin() {
   return useMutation({
     mutationFn: (input: { email: string; password: string; remember: boolean }) =>
       api.post<AuthResponse>("/auth/login", input),
-    onSuccess: ({ user }) => qc.setQueryData(sessionKey, user),
+    onSuccess: ({ user }) => {
+      // descarta sobra de cache de outro usuario antes de assumir a sessao nova
+      qc.clear();
+      qc.setQueryData(sessionKey, user);
+    },
   });
 }
 
@@ -50,7 +55,11 @@ export function useRegister() {
   return useMutation({
     mutationFn: (input: { name: string; email: string; password: string }) =>
       api.post<AuthResponse>("/auth/register", input),
-    onSuccess: ({ user }) => qc.setQueryData(sessionKey, user),
+    onSuccess: ({ user }) => {
+      // descarta sobra de cache de outro usuario antes de assumir a sessao nova
+      qc.clear();
+      qc.setQueryData(sessionKey, user);
+    },
   });
 }
 
@@ -58,6 +67,11 @@ export function useLogout() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => api.post<{ ok: true }>("/auth/logout"),
-    onSuccess: () => qc.setQueryData(sessionKey, null),
+    onSuccess: () => {
+      // logout limpa tudo (memoria + localStorage) pra nao vazar analise/dados pro proximo
+      qc.clear();
+      void persister.removeClient();
+      qc.setQueryData(sessionKey, null);
+    },
   });
 }
