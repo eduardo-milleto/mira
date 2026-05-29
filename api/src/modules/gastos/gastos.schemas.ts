@@ -18,25 +18,43 @@ export const expenseUpdateSchema = expenseCreateSchema
   .refine((d) => Object.keys(d).length > 0, "Nada para atualizar");
 
 // --- cartoes de credito ---
-export const cardCreateSchema = z.object({
-  name: z.string().trim().min(1, "Informe o apelido do cartao").max(80),
-  bank: z.string().trim().min(1, "Informe o banco").max(40),
-  brand: z.string().trim().min(1, "Informe a bandeira").max(40),
-  avgMonthlySpend: money,
-  includeInMonthly: z.boolean().optional().default(false),
-});
+// banco e bandeira sao individualmente opcionais (nullable); a regra "pelo menos
+// um dos dois" e validada por refine. null = campo nao informado.
+const bankField = z.string().trim().max(40).nullable();
+const brandField = z.string().trim().max(40).nullable();
+
+export const cardCreateSchema = z
+  .object({
+    name: z.string().trim().min(1, "Informe o apelido do cartao").max(80),
+    bank: bankField.optional(),
+    brand: brandField.optional(),
+    avgMonthlySpend: money,
+    includeInMonthly: z.boolean().optional().default(false),
+  })
+  .refine((d) => Boolean(d.bank || d.brand), {
+    message: "Escolha um banco ou uma bandeira",
+    path: ["bank"],
+  });
 
 // update sem o .default(false) do create: omitir um campo = nao mexer nele
 export const cardUpdateSchema = z
   .object({
     name: z.string().trim().min(1, "Informe o apelido do cartao").max(80),
-    bank: z.string().trim().min(1, "Informe o banco").max(40),
-    brand: z.string().trim().min(1, "Informe a bandeira").max(40),
+    bank: bankField,
+    brand: brandField,
     avgMonthlySpend: money,
     includeInMonthly: z.boolean(),
   })
   .partial()
-  .refine((d) => Object.keys(d).length > 0, "Nada para atualizar");
+  .refine((d) => Object.keys(d).length > 0, "Nada para atualizar")
+  // so checa "pelo menos um" quando o update realmente mexe em banco/bandeira
+  .refine(
+    (d) => {
+      if (!("bank" in d) && !("brand" in d)) return true;
+      return Boolean((d.bank ?? null) || (d.brand ?? null));
+    },
+    { message: "Escolha um banco ou uma bandeira", path: ["bank"] },
+  );
 
 export type ExpenseCreateInput = z.infer<typeof expenseCreateSchema>;
 export type ExpenseUpdateInput = z.infer<typeof expenseUpdateSchema>;

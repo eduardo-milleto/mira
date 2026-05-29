@@ -70,7 +70,7 @@ export function CardsTab() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-heading">{card.name}</p>
                   <p className="truncate text-xs text-faint">
-                    {card.brand ? `${card.bank} · ${card.brand}` : card.bank}
+                    {[card.bank, card.brand].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
