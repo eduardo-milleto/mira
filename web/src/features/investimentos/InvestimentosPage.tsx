@@ -7,13 +7,13 @@ export function InvestimentosPage() {
       <div>
         <h1 className="text-3xl font-light tracking-tighter text-heading">Investimentos</h1>
         <p className="mt-2 text-sm font-light text-muted">
-          Cadastre e classifique seus ativos. Eles compõem o seu patrimônio na Visão geral e alimentam
-          a projeção da Mira.
+          Cadastre e classifique seus ativos financeiros. Eles compõem o seu patrimônio na Visão geral
+          e alimentam a projeção da Mira.
         </p>
       </div>
 
       <PatrimonyProjectionCard />
-      <InvestmentList />
+      <InvestmentList kind="investimento" />
     </div>
   );
 }

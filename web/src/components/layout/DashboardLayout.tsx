@@ -13,6 +13,7 @@ import {
   ChevronsUpDown,
   Coins,
   Home,
+  Landmark,
   LogOut,
   Sparkles,
   Target,
@@ -33,6 +34,7 @@ const navItems: NavItem[] = [
   { icon: Sparkles, label: "Sugestões IA", to: "/sugestoes" },
   { icon: Coins, label: "Potenciais rendas" },
   { icon: Target, label: "Investimentos", to: "/investimentos" },
+  { icon: Landmark, label: "Patrimônio", to: "/patrimonio" },
 ];
 
 const navBase = "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm outline-none transition";

@@ -12,8 +12,12 @@ const pct = z
   .min(-100, "Percentual invalido")
   .max(1000, "Percentual muito alto");
 
+// patrimonio = bens (imovel, veiculo); investimento = ativos financeiros/renda passiva
+const investmentKind = z.enum(["investimento", "patrimonio"]);
+
 // --- investimentos ---
 export const investmentCreateSchema = z.object({
+  kind: investmentKind.optional().default("investimento"),
   name: z.string().trim().min(1, "Informe o nome").max(80),
   category: z.string().trim().min(1, "Informe a categoria").max(40),
   value: money,
@@ -25,6 +29,7 @@ export const investmentCreateSchema = z.object({
 // expectedReturnPct e notes aceitam null pra "limpar" a premissa
 export const investmentUpdateSchema = z
   .object({
+    kind: investmentKind,
     name: z.string().trim().min(1, "Informe o nome").max(80),
     category: z.string().trim().min(1, "Informe a categoria").max(40),
     value: money,

@@ -97,6 +97,7 @@ model IncomeStep {
 model Investment {
   id                String   @id @default(uuid())
   userId            String
+  kind              String   @default("investimento") // "investimento" | "patrimonio"
   name              String // ex: "Apto Centro", "Tesouro IPCA", "Carteira de acoes"
   category          String // classificacao livre (ex: "Imovel", "Renda fixa", "Trade")
   value             Decimal  @db.Decimal(12, 2) // valor atual
