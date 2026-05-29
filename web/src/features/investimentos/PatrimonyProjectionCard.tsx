@@ -14,7 +14,8 @@ const HORIZON_OPTIONS = ["3", "5", "10", "15", "20"];
 
 export function PatrimonyProjectionCard() {
   const navigate = useNavigate();
-  const { data, isLoading, isError } = useInsightsData();
+  // projeta so os investimentos (kind="investimento"), de fora os bens de patrimonio
+  const { data, isLoading, isError } = useInsightsData("investimento");
   const { data: settings } = useProjectionSettings();
   const updateSettings = useUpdateProjectionSettings();
 
@@ -48,7 +49,7 @@ export function PatrimonyProjectionCard() {
     <Card className="p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <p className="flex items-center gap-2 text-sm text-muted">
-          Projeção do patrimônio <Info className="h-3.5 w-3.5 text-faint" />
+          Projeção dos investimentos <Info className="h-3.5 w-3.5 text-faint" />
         </p>
         <div className="w-32">
           <ComboboxField
