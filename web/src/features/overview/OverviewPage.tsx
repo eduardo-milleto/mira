@@ -1,20 +1,16 @@
 import { Info } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Card } from "../../components/ui/Card";
 import { FeatureCard } from "../../components/FeatureCard";
 import { formatBRL } from "../../lib/format";
 import { useSession } from "../auth/auth.api";
+import { useCreditCards, useExpenses } from "../gastos/gastos.api";
+import { buildSpending } from "../gastos/spending";
 import { HeroCard } from "./HeroCard";
 import { ProjectionChart } from "./ProjectionChart";
 import { BreakdownList } from "./BreakdownList";
 import { useInsights } from "./insights.api";
-import {
-  assetBreakdown,
-  featureLinks,
-  monthlyIncome,
-  monthlySpending,
-  netWorth,
-  spendingBreakdown,
-} from "./data";
+import { assetBreakdown, featureLinks, monthlyIncome, netWorth } from "./data";
 
 function CardHeader({ title, period }: { title: string; period?: string }) {
   return (
@@ -29,9 +25,21 @@ function CardHeader({ title, period }: { title: string; period?: string }) {
 
 export function OverviewPage() {
   const { data: user } = useSession();
+  const expensesQuery = useExpenses(!!user);
+  const cardsQuery = useCreditCards(!!user);
+  const spendingLoading = expensesQuery.isLoading || cardsQuery.isLoading;
+  const spending = buildSpending(expensesQuery.data ?? [], cardsQuery.data ?? []);
+
+  // so calcula insights quando ja temos o gasto real (evita chamada com total 0 no load)
   const insights = useInsights(
-    { monthlyIncome, monthlyExpenses: monthlySpending, netWorth },
-    !!user,
+    {
+      monthlyIncome,
+      monthlyExpenses: spending.total,
+      netWorth,
+      spendingBreakdown: spending.items.map((i) => ({ name: i.name, value: i.value })),
+      assetBreakdown: assetBreakdown.map((a) => ({ name: a.name, value: a.value })),
+    },
+    !!user && !spendingLoading,
   );
 
   const projection = insights.data?.projection5y ?? [];
@@ -48,10 +56,21 @@ export function OverviewPage() {
         <Card className="p-6">
           <CardHeader title="Gastos mensais" period="Este mês" />
           <p className="tnum mt-2 text-3xl font-light tracking-tighter text-heading">
-            {formatBRL(monthlySpending)}
+            {formatBRL(spending.total)}
           </p>
           <div className="mt-5">
-            <BreakdownList items={spendingBreakdown} />
+            {spendingLoading ? (
+              <p className="text-sm text-muted">Carregando...</p>
+            ) : spending.items.length ? (
+              <BreakdownList items={spending.items} />
+            ) : (
+              <p className="text-sm text-muted">
+                Nenhum gasto cadastrado.{" "}
+                <Link to="/gastos" className="text-brand transition hover:text-brand-dark">
+                  Adicionar gastos
+                </Link>
+              </p>
+            )}
           </div>
         </Card>
 

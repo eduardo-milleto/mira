@@ -6,18 +6,6 @@ export type BreakdownItem = { name: string; value: number; percent: number };
 // total de ganhos do mes (planilha, itens em azul) — usado como entrada do calculo de insights
 export const monthlyIncome = 24870;
 
-// gastos do mes atual (planilha, aba "Mes atual" — itens em vermelho)
-export const monthlySpending = 19456;
-export const spendingBreakdown: BreakdownItem[] = [
-  { name: "Aluguel AP", value: 7050, percent: 36.2 },
-  { name: "Consórcio + Carta", value: 5883, percent: 30.2 },
-  { name: "Banrisul + Dev", value: 2200, percent: 11.3 },
-  { name: "Nubank + Vagas + MercadoPago + Inter", value: 1363, percent: 7.0 },
-  { name: "Clube + Facul + Smart", value: 1360, percent: 7.0 },
-  { name: "Itaú (Comida + Gasolina)", value: 1000, percent: 5.1 },
-  { name: "Seguro + Claro", value: 600, percent: 3.1 },
-];
-
 // patrimonio = soma das reservas/investimentos (planilha, tabela Investimentos)
 export const netWorth = 634500;
 export const assetBreakdown: BreakdownItem[] = [
