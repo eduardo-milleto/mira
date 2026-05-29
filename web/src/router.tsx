@@ -18,6 +18,7 @@ import { ProjecoesPage } from "./features/projecoes/ProjecoesPage";
 import { InsightsPage } from "./features/insights/InsightsPage";
 import { InvestimentosPage } from "./features/investimentos/InvestimentosPage";
 import { PatrimonioPage } from "./features/patrimonio/PatrimonioPage";
+import { CofrePage } from "./features/cofre/CofrePage";
 
 type RouterContext = { queryClient: QueryClient };
 
@@ -105,6 +106,12 @@ const patrimonioRoute = createRoute({
   component: PatrimonioPage,
 });
 
+const cofreRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/cofre",
+  component: CofrePage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
@@ -117,6 +124,7 @@ const routeTree = rootRoute.addChildren([
     insightsRoute,
     investimentosRoute,
     patrimonioRoute,
+    cofreRoute,
   ]),
 ]);
 
