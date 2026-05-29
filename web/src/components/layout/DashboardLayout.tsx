@@ -29,8 +29,8 @@ const navItems: NavItem[] = [
   { icon: Home, label: "Visão geral", to: "/", exact: true },
   { icon: CalendarDays, label: "Ganhos mensais", to: "/ganhos" },
   { icon: Wallet, label: "Gastos", to: "/gastos" },
-  { icon: BarChart3, label: "Projeções" },
-  { icon: Sparkles, label: "Sugestões IA" },
+  { icon: BarChart3, label: "Projeções", to: "/projecoes" },
+  { icon: Sparkles, label: "Sugestões IA", to: "/sugestoes" },
   { icon: Coins, label: "Potenciais rendas" },
   { icon: Target, label: "Investimentos" },
 ];

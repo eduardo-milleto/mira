@@ -1,4 +1,5 @@
 import { ArrowRight, TrendingUp } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { Button } from "../../components/ui/Button";
 import { HealthGauge } from "./HealthGauge";
 import { EvolutionTimeline } from "./EvolutionTimeline";
@@ -16,6 +17,7 @@ type HeroCardProps = {
 };
 
 export function HeroCard({ userName, insights, loading }: HeroCardProps) {
+  const navigate = useNavigate();
   return (
     <section className="relative overflow-hidden rounded-2xl border border-border">
       {/* video de fundo do hero + overlay escuro pra legibilidade do conteudo */}
@@ -39,7 +41,7 @@ export function HeroCard({ userName, insights, loading }: HeroCardProps) {
             A Mira usa o que sabe sobre você para simplificar suas decisões e acelerar sua liberdade
             financeira.
           </p>
-          <Button className="mt-6">
+          <Button className="mt-6" onPress={() => navigate({ to: "/sugestoes" })}>
             Ver recomendações
             <ArrowRight className="h-4 w-4" />
           </Button>

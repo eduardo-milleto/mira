@@ -59,7 +59,7 @@ export function ComboboxField({
         <ListBox
           className="max-h-60 overflow-auto outline-none"
           renderEmptyState={() => (
-            <p className="px-3 py-2 text-sm text-faint">Nenhum banco encontrado</p>
+            <p className="px-3 py-2 text-sm text-faint">Nenhuma opção encontrada</p>
           )}
         >
           {(item: { id: string; name: string }) => (
