@@ -1,4 +1,4 @@
-import { BarChart3, Coins, Info, PieChart, Sparkles } from "lucide-react";
+import { BarChart3, Info, PieChart, Sparkles } from "lucide-react";
 import { Card } from "../../components/ui/Card";
 import { FeatureCard } from "../../components/FeatureCard";
 import { useSession } from "../auth/auth.api";
@@ -25,7 +25,6 @@ function CardHeader({ title, period }: { title: string; period?: string }) {
 
 const featureLinks = [
   { icon: BarChart3, title: "Projeções", desc: "Veja suas projeções futuras de ganhos." },
-  { icon: Coins, title: "Potenciais rendas", desc: "Descubra novas fontes de renda." },
   { icon: Sparkles, title: "Sugestões IA", desc: "Receba recomendações para aumentar seus ganhos." },
   { icon: PieChart, title: "Investimentos", desc: "Acompanhe o impacto dos investimentos nos seus ganhos." },
 ];
