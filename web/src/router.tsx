@@ -13,6 +13,7 @@ import { DashboardLayout } from "./components/layout/DashboardLayout";
 import { OverviewPage } from "./features/overview/OverviewPage";
 import { GanhosPage } from "./features/ganhos/GanhosPage";
 import { GastosPage } from "./features/gastos/GastosPage";
+import { ExtrasPage } from "./features/extras/ExtrasPage";
 import { ProjecoesPage } from "./features/projecoes/ProjecoesPage";
 import { InsightsPage } from "./features/insights/InsightsPage";
 import { InvestimentosPage } from "./features/investimentos/InvestimentosPage";
@@ -74,6 +75,12 @@ const gastosRoute = createRoute({
   component: GastosPage,
 });
 
+const extrasRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/extras",
+  component: ExtrasPage,
+});
+
 const projecoesRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: "/projecoes",
@@ -105,6 +112,7 @@ const routeTree = rootRoute.addChildren([
     overviewRoute,
     ganhosRoute,
     gastosRoute,
+    extrasRoute,
     projecoesRoute,
     insightsRoute,
     investimentosRoute,

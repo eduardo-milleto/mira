@@ -7,6 +7,7 @@ import {
   Button as AriaButton,
 } from "react-aria-components";
 import {
+  ArrowDownUp,
   BarChart3,
   Bell,
   CalendarDays,
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { icon: Home, label: "Visão geral", to: "/", exact: true },
   { icon: CalendarDays, label: "Ganhos mensais", to: "/ganhos" },
   { icon: Wallet, label: "Gastos", to: "/gastos" },
+  { icon: ArrowDownUp, label: "Extras", to: "/extras" },
   { icon: BarChart3, label: "Projeções", to: "/projecoes" },
   { icon: Sparkles, label: "Sugestões IA", to: "/sugestoes" },
   { icon: Coins, label: "Potenciais rendas" },

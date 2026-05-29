@@ -3,7 +3,8 @@ import type { PersonalExpense, CategoryLimit, AdvisorMessage } from "@prisma/cli
 import { prisma } from "../../prisma.js";
 import { env } from "../../env.js";
 import { authenticate } from "../../plugins/auth.js";
-import { buildAdvisorContext, currentMonthRange } from "./context.js";
+import { buildAdvisorContext } from "./context.js";
+import { monthRange } from "../../lib/month.js";
 import { runAdvisorChat, suggestLimits, type ChatTurn } from "./advisor.js";
 import {
   personalExpenseCreateSchema,
@@ -106,9 +107,11 @@ export async function personalRoutes(app: FastifyInstance) {
     return reply.code(204).send();
   });
 
-  // resumo do mes corrente: total + soma por categoria (calculado no servidor, em UTC)
+  // resumo do mes: total + soma por categoria (calculado no servidor, em UTC).
+  // ?month=YYYY-MM filtra um mes especifico; sem o parametro usa o mes corrente.
   app.get("/summary", async (request, reply) => {
-    const { start, end } = currentMonthRange(new Date());
+    const { month } = request.query as { month?: string };
+    const { start, end } = monthRange(month, new Date());
     const expenses = await prisma.personalExpense.findMany({
       where: { userId: request.user.sub, spentAt: { gte: start, lt: end } },
     });

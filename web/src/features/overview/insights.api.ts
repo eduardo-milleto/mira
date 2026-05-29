@@ -73,7 +73,8 @@ export function useInsightsData(kindFilter?: InvestmentKind) {
   const incomesQuery = useIncomes(!!user);
   const settingsQuery = useProjectionSettings(!!user);
   const investmentsQuery = useInvestments(!!user);
-  const personalQuery = usePersonalSummary(!!user);
+  // projecao usa o gasto pessoal do mes atual (typical), nao o mes selecionado na Visao geral
+  const personalQuery = usePersonalSummary(undefined, !!user);
   const loading =
     expensesQuery.isLoading ||
     cardsQuery.isLoading ||

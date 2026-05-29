@@ -1,17 +1,12 @@
 import { prisma } from "../../prisma.js";
-
-// limites de tempo do mes corrente em UTC. como spentAt e gravado como meia-noite UTC
-// da data escolhida, comparar em UTC mantem a soma do mes consistente em qualquer fuso.
-export function currentMonthRange(now: Date): { start: Date; end: Date } {
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-  return { start, end };
-}
+import { monthRange } from "../../lib/month.js";
 
 // snapshot financeiro completo do usuario, montado 100% a partir do banco.
 // alimenta tanto o chat da consultora quanto a sugestao de limites.
 export type AdvisorContext = {
   monthlyIncome: number;
+  extraGanhoTotal: number;
+  extraGastoTotal: number;
   fixedExpensesTotal: number;
   fixedExpenses: { name: string; value: number }[];
   netWorth: number;
@@ -31,11 +26,11 @@ const DEFAULT_RETURN_RATE = 10;
 const DEFAULT_HORIZON = 5;
 
 export async function buildAdvisorContext(userId: string, now: Date): Promise<AdvisorContext> {
-  const { start, end } = currentMonthRange(now);
+  const { start, end } = monthRange(undefined, now);
   const currentYear = now.getUTCFullYear();
 
   // uma rodada de queries, todas escopadas pelo userId (sem vazar dado de outro usuario)
-  const [expenses, cards, incomes, investments, settings, personal, limits, profile] =
+  const [expenses, cards, incomes, investments, settings, personal, limits, profile, extras] =
     await Promise.all([
       prisma.expense.findMany({ where: { userId } }),
       prisma.creditCard.findMany({ where: { userId } }),
@@ -48,6 +43,7 @@ export async function buildAdvisorContext(userId: string, now: Date): Promise<Ad
       }),
       prisma.categoryLimit.findMany({ where: { userId } }),
       prisma.spendingProfile.findUnique({ where: { userId } }),
+      prisma.extra.findMany({ where: { userId, occurredAt: { gte: start, lt: end } } }),
     ]);
 
   // renda mensal = fontes ja ativas (rendas futuras so contam a partir do startYear)
@@ -80,8 +76,19 @@ export async function buildAdvisorContext(userId: string, now: Date): Promise<Ad
   const personalMonthTotal = personal.reduce((sum, p) => sum + p.amount.toNumber(), 0);
   const personalByCategory = [...byPersonal.entries()].map(([category, spent]) => ({ category, spent }));
 
+  // ganhos/gastos extras do mes (pontuais): entram no caixa do mes, mas nao na renda recorrente
+  let extraGanhoTotal = 0;
+  let extraGastoTotal = 0;
+  for (const e of extras) {
+    const value = e.amount.toNumber();
+    if (e.kind === "ganho") extraGanhoTotal += value;
+    else extraGastoTotal += value;
+  }
+
   return {
     monthlyIncome,
+    extraGanhoTotal,
+    extraGastoTotal,
     fixedExpensesTotal,
     fixedExpenses,
     netWorth,
@@ -118,12 +125,19 @@ export async function buildAdvisorContext(userId: string, now: Date): Promise<Ad
 // usado pelo chat e pela sugestao de limites.
 export function formatContext(ctx: AdvisorContext): string {
   const lines: string[] = [];
-  const surplus = ctx.monthlyIncome - ctx.fixedExpensesTotal - ctx.personalMonthTotal;
+  const surplus =
+    ctx.monthlyIncome +
+    ctx.extraGanhoTotal -
+    ctx.fixedExpensesTotal -
+    ctx.personalMonthTotal -
+    ctx.extraGastoTotal;
 
-  lines.push(`Renda mensal: R$ ${ctx.monthlyIncome}`);
+  lines.push(`Renda mensal recorrente: R$ ${ctx.monthlyIncome}`);
+  lines.push(`Ganhos extras neste mes (pontuais): R$ ${ctx.extraGanhoTotal}`);
   lines.push(`Gasto fixo mensal: R$ ${ctx.fixedExpensesTotal}`);
   lines.push(`Gasto pessoal ja feito neste mes: R$ ${ctx.personalMonthTotal}`);
-  lines.push(`Sobra estimada do mes (renda - fixo - pessoal): R$ ${surplus}`);
+  lines.push(`Gastos extras neste mes (pontuais): R$ ${ctx.extraGastoTotal}`);
+  lines.push(`Sobra estimada do mes (renda + extras - fixo - pessoal - gastos extras): R$ ${surplus}`);
   lines.push(`Patrimonio atual: R$ ${ctx.netWorth}`);
   lines.push("");
 
