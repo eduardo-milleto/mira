@@ -4,15 +4,17 @@ import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { formatBRL } from "../../lib/format";
-import { IncomeFormModal } from "./IncomeFormModal";
-import { useDeleteIncome, useIncomes, type IncomeSource } from "./projecoes.api";
+import { IncomeFormModal } from "../projecoes/IncomeFormModal";
+import { useDeleteIncome, useIncomes, type IncomeSource } from "../projecoes/projecoes.api";
 
 // "8,5" sem zeros a toa pra exibir o percentual
 function fmtPct(v: number): string {
   return String(v).replace(".", ",");
 }
 
-export function IncomeList() {
+// gestao das fontes de renda mensais (criar/editar/excluir). mesma base que alimenta
+// a composicao dos ganhos e a projecao da Mira.
+export function EarningsList() {
   const { data: incomes, isLoading } = useIncomes();
   const remove = useDeleteIncome();
 
@@ -38,7 +40,7 @@ export function IncomeList() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-muted">Fontes de renda que alimentam a projeção</p>
+        <p className="text-sm text-muted">Suas fontes de renda mensais</p>
         <Button onPress={openCreate} className="px-4 py-2.5">
           <Plus className="h-4 w-4" />
           Adicionar fonte de renda
@@ -53,7 +55,7 @@ export function IncomeList() {
             <Wallet className="h-8 w-8 text-faint" />
             <p className="text-sm text-muted">Nenhuma fonte de renda cadastrada ainda.</p>
             <p className="text-xs text-faint">
-              Adicione seu salário e outras rendas para a Mira projetar seu futuro.
+              Adicione seu salário e outras rendas para ver seus ganhos e a projeção.
             </p>
           </div>
         ) : (

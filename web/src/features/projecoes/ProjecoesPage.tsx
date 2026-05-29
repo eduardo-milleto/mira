@@ -1,12 +1,11 @@
 import { ArrowRight, Info } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { formatBRL } from "../../lib/format";
 import { ProjectionChart } from "../overview/ProjectionChart";
 import { useInsightsData } from "../overview/insights.api";
 import { ProjectionSettingsCard } from "./ProjectionSettingsCard";
-import { IncomeList } from "./IncomeList";
 
 export function ProjecoesPage() {
   const navigate = useNavigate();
@@ -67,13 +66,16 @@ export function ProjecoesPage() {
       <div>
         <h2 className="text-lg font-medium text-heading">Ajuste sua projeção</h2>
         <p className="mt-1 text-sm font-light text-muted">
-          Suas fontes de renda e premissas alimentam o cálculo acima — edite e veja a projeção
-          se atualizar.
+          As premissas abaixo e suas fontes de renda alimentam o cálculo acima. As rendas são
+          gerenciadas em{" "}
+          <Link to="/ganhos" className="text-brand transition hover:text-brand-dark">
+            Ganhos mensais
+          </Link>
+          .
         </p>
       </div>
 
       <ProjectionSettingsCard />
-      <IncomeList />
     </div>
   );
 }

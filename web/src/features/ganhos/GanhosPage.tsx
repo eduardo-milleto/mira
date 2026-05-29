@@ -1,10 +1,14 @@
 import { BarChart3, Coins, Info, PieChart, Sparkles } from "lucide-react";
 import { Card } from "../../components/ui/Card";
 import { FeatureCard } from "../../components/FeatureCard";
+import { useSession } from "../auth/auth.api";
+import { useIncomes } from "../projecoes/projecoes.api";
+import { buildEarnings } from "./earnings";
 import { EarningsHero } from "./EarningsHero";
 import { CompositionChart } from "./CompositionChart";
-import { RecurringVsVariable } from "./RecurringVsVariable";
+import { ActiveVsFuture } from "./ActiveVsFuture";
 import { TopSources } from "./TopSources";
+import { EarningsList } from "./EarningsList";
 
 function CardHeader({ title, period }: { title: string; period?: string }) {
   return (
@@ -25,32 +29,60 @@ const featureLinks = [
 ];
 
 export function GanhosPage() {
+  const { data: user } = useSession();
+  const { data: incomes, isLoading } = useIncomes(!!user);
+  const currentYear = new Date().getFullYear();
+  const earnings = buildEarnings(incomes ?? [], currentYear);
+  const hasIncome = earnings.slices.length > 0;
+
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
-      <EarningsHero />
+      <EarningsHero total={earnings.total} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6">
           <CardHeader title="Composição dos ganhos" period="Este mês" />
           <div className="mt-6">
-            <CompositionChart />
+            {isLoading ? (
+              <p className="text-sm text-muted">Carregando...</p>
+            ) : hasIncome ? (
+              <CompositionChart slices={earnings.slices} total={earnings.total} />
+            ) : (
+              <p className="text-sm text-muted">
+                Cadastre suas fontes de renda abaixo para ver a composição dos seus ganhos.
+              </p>
+            )}
           </div>
         </Card>
 
         <Card className="p-6">
-          <CardHeader title="Renda recorrente vs variável" period="Este mês" />
+          <CardHeader title="Renda ativa vs futura" period="Este mês" />
           <div className="mt-6">
-            <RecurringVsVariable />
+            {isLoading ? (
+              <p className="text-sm text-muted">Carregando...</p>
+            ) : (
+              <ActiveVsFuture active={earnings.activeColumn} future={earnings.futureColumn} />
+            )}
           </div>
         </Card>
       </div>
 
-      <Card className="p-6">
-        <CardHeader title="Principais fontes este mês" />
-        <div className="mt-5">
-          <TopSources />
-        </div>
-      </Card>
+      {hasIncome && (
+        <Card className="p-6">
+          <CardHeader title="Principais fontes este mês" />
+          <div className="mt-5">
+            <TopSources sources={earnings.slices} />
+          </div>
+        </Card>
+      )}
+
+      <div>
+        <h2 className="text-lg font-medium text-heading">Gerenciar fontes de renda</h2>
+        <p className="mt-1 text-sm font-light text-muted">
+          Adicione, edite ou remova suas rendas — elas alimentam seus ganhos e a projeção da Mira.
+        </p>
+      </div>
+      <EarningsList />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {featureLinks.map((f) => (
