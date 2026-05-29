@@ -3,9 +3,12 @@ import { Link } from "@tanstack/react-router";
 import { Card } from "../../components/ui/Card";
 import { FeatureCard } from "../../components/FeatureCard";
 import { formatBRL } from "../../lib/format";
+import { cn } from "../../lib/cn";
 import { useSession } from "../auth/auth.api";
 import { useCreditCards, useExpenses } from "../gastos/gastos.api";
 import { buildSpending } from "../gastos/spending";
+import { useIncomes } from "../projecoes/projecoes.api";
+import { buildEarnings } from "../ganhos/earnings";
 import { investmentKindOf, useInvestments } from "../investimentos/investimentos.api";
 import { buildPatrimony } from "../investimentos/patrimony";
 import { usePersonalSummary } from "../gastos-pessoais/personal.api";
@@ -61,6 +64,14 @@ export function OverviewPage() {
     personalQuery.data?.monthTotal ?? 0,
   );
 
+  // ganhos do mes (mesma fonte da pagina de Ganhos) pra fechar o resultado do mes
+  const incomesQuery = useIncomes(!!user);
+  const currentYear = new Date().getFullYear();
+  const earnings = buildEarnings(incomesQuery.data ?? [], currentYear);
+  const monthLoading = spendingLoading || incomesQuery.isLoading;
+  const resultado = earnings.total - spending.total; // o que sobra: ganhos - gastos
+  const topExpenses = spending.items.slice(0, 3); // ja vem ordenado do maior pro menor
+
   const investmentsQuery = useInvestments(!!user);
   const allAssets = investmentsQuery.data ?? [];
   const patrimony = buildPatrimony(allAssets); // total geral (patrimonio + investimentos)
@@ -83,24 +94,71 @@ export function OverviewPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6">
-          <CardHeader title="Gastos mensais" period="Este mês" />
-          <p className="tnum mt-2 text-3xl font-light tracking-tighter text-heading">
-            {formatBRL(spending.total)}
-          </p>
-          <div className="mt-5">
-            {spendingLoading ? (
-              <p className="text-sm text-muted">Carregando...</p>
-            ) : spending.items.length ? (
-              <BreakdownList items={spending.items} />
-            ) : (
-              <p className="text-sm text-muted">
-                Nenhum gasto cadastrado.{" "}
-                <Link to="/gastos" className="text-brand transition hover:text-brand-dark">
-                  Adicionar gastos
-                </Link>
+          <CardHeader title="Resultado do mês" period="Este mês" />
+          {monthLoading ? (
+            <p className="mt-2 text-sm text-muted">Carregando...</p>
+          ) : (
+            <>
+              <p
+                className={cn(
+                  "tnum mt-2 text-3xl font-light tracking-tighter",
+                  resultado > 0 && "text-positive",
+                  resultado < 0 && "text-negative",
+                  resultado === 0 && "text-heading",
+                )}
+              >
+                {formatBRL(resultado)}
               </p>
-            )}
-          </div>
+              <div className="mt-5 space-y-3">
+                <div className="flex items-baseline justify-between gap-3 text-sm">
+                  <span className="text-heading">Ganhos</span>
+                  <span className="flex items-baseline gap-2">
+                    <span className="tnum text-heading">{formatBRL(earnings.total)}</span>
+                    {earnings.total === 0 && (
+                      <Link to="/ganhos" className="text-brand transition hover:text-brand-dark">
+                        adicionar
+                      </Link>
+                    )}
+                  </span>
+                </div>
+                <div>
+                  <div className="flex items-baseline justify-between gap-3 text-sm">
+                    <span className="text-heading">Gastos</span>
+                    <span className="tnum text-heading">{formatBRL(spending.total)}</span>
+                  </div>
+                  {topExpenses.length ? (
+                    <ul className="mt-2 space-y-1.5 border-l border-border pl-3">
+                      {topExpenses.map((item) => (
+                        <li
+                          key={item.name}
+                          className="flex items-baseline justify-between gap-3 text-sm text-muted"
+                        >
+                          <span className="min-w-0 truncate">{item.name}</span>
+                          <span className="tnum shrink-0">{formatBRL(item.value)}</span>
+                        </li>
+                      ))}
+                      {spending.items.length > 3 && (
+                        <li>
+                          <Link
+                            to="/gastos"
+                            className="text-sm text-brand transition hover:text-brand-dark"
+                          >
+                            ver todos
+                          </Link>
+                        </li>
+                      )}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 pl-3 text-sm text-muted">
+                      <Link to="/gastos" className="text-brand transition hover:text-brand-dark">
+                        Adicionar gastos
+                      </Link>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </Card>
 
         <Card className="p-6">
