@@ -18,11 +18,14 @@ import {
   LogOut,
   Sparkles,
   Target,
+  Vault,
   Wallet,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Logo } from "../Logo";
 import { useLogout, useSession } from "../../features/auth/auth.api";
+import { useCofre } from "../../features/cofre/cofre.api";
+import { CofreMonthCloseModal } from "../../features/cofre/CofreMonthCloseModal";
 
 type NavItem = { icon: LucideIcon; label: string; to?: string; exact?: boolean };
 
@@ -37,6 +40,7 @@ const navItems: NavItem[] = [
   { icon: Coins, label: "Potenciais rendas" },
   { icon: Target, label: "Investimentos", to: "/investimentos" },
   { icon: Landmark, label: "Patrimônio", to: "/patrimonio" },
+  { icon: Vault, label: "Cofre", to: "/cofre" },
 ];
 
 const navBase = "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm outline-none transition";
@@ -47,6 +51,8 @@ export function DashboardLayout() {
   const navigate = useNavigate();
   const { data: user } = useSession();
   const logout = useLogout();
+  // fechamentos de mes pendentes: enquanto houver, o modal bloqueante cobre o app inteiro
+  const { data: cofre } = useCofre(!!user);
 
   function handleLogout() {
     logout.mutate(undefined, { onSuccess: () => navigate({ to: "/login" }) });
@@ -130,6 +136,10 @@ export function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+
+      {cofre && cofre.pendingMonths.length > 0 && (
+        <CofreMonthCloseModal pendingMonths={cofre.pendingMonths} />
+      )}
     </div>
   );
 }
