@@ -7,7 +7,6 @@ import {
   Button as AriaButton,
 } from "react-aria-components";
 import {
-  Activity,
   BarChart3,
   Bell,
   CalendarDays,
@@ -15,9 +14,9 @@ import {
   Coins,
   Home,
   LogOut,
-  Search,
   Sparkles,
   Target,
+  Wallet,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Logo } from "../Logo";
@@ -29,6 +28,7 @@ type NavItem = { icon: LucideIcon; label: string; to?: string; exact?: boolean }
 const navItems: NavItem[] = [
   { icon: Home, label: "Visão geral", to: "/", exact: true },
   { icon: CalendarDays, label: "Ganhos mensais", to: "/ganhos" },
+  { icon: Wallet, label: "Gastos", to: "/gastos" },
   { icon: BarChart3, label: "Projeções" },
   { icon: Sparkles, label: "Sugestões IA" },
   { icon: Coins, label: "Potenciais rendas" },
@@ -110,17 +110,7 @@ export function DashboardLayout() {
 
       <div className="flex flex-1 flex-col">
         <header className="flex items-center gap-4 border-b border-border px-6 py-4">
-          <div className="flex max-w-md flex-1 items-center gap-3 rounded-xl border border-border bg-surface-2 px-4 py-2.5 text-sm text-faint">
-            <Search className="h-4 w-4" />
-            <span className="flex-1">Pergunte à Mira...</span>
-            <kbd className="rounded border border-border px-1.5 py-0.5 text-xs">⌘K</kbd>
-          </div>
           <div className="ml-auto flex items-center gap-3">
-            <span className="flex items-center gap-2 rounded-full border border-border px-3 py-2 text-sm text-muted">
-              <span className="h-2 w-2 rounded-full bg-brand" />
-              IA guiando você
-              <Activity className="h-4 w-4 text-brand" />
-            </span>
             <button
               type="button"
               className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted transition hover:text-heading"

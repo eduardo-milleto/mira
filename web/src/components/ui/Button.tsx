@@ -1,7 +1,7 @@
 import { Button as AriaButton, type ButtonProps as AriaButtonProps } from "react-aria-components";
 import { cn } from "../../lib/cn";
 
-type Variant = "primary" | "ghost" | "outline";
+type Variant = "primary" | "ghost" | "outline" | "danger";
 
 type ButtonProps = AriaButtonProps & {
   variant?: Variant;
@@ -17,6 +17,8 @@ const variants: Record<Variant, string> = {
     "bg-brand-gradient text-black font-semibold shadow-glow data-[hovered]:brightness-110 data-[pressed]:brightness-95",
   ghost: "text-muted data-[hovered]:text-heading data-[hovered]:bg-white/5",
   outline: "border border-border text-heading data-[hovered]:bg-white/5 data-[pressed]:bg-white/10",
+  danger:
+    "bg-negative text-black font-semibold data-[hovered]:brightness-110 data-[pressed]:brightness-95",
 };
 
 export function Button({ variant = "primary", className, ...props }: ButtonProps) {

@@ -34,17 +34,49 @@ const responseSchema = {
         propertyOrdering: ["year", "value"],
       },
     },
+    projectionExplanation: { type: "STRING" },
+    recommendations: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          title: { type: "STRING" },
+          description: { type: "STRING" },
+          priority: { type: "STRING" },
+        },
+        propertyOrdering: ["title", "description", "priority"],
+      },
+    },
   },
-  propertyOrdering: ["healthScore", "status", "insight", "steps", "projection5y"],
+  propertyOrdering: [
+    "healthScore",
+    "status",
+    "insight",
+    "steps",
+    "projection5y",
+    "projectionExplanation",
+    "recommendations",
+  ],
 };
+
+function formatBreakdown(items: { name: string; value: number }[]): string {
+  if (!items.length) return "(nao informado)";
+  return items.map((i) => `- ${i.name}: R$ ${i.value}`).join("\n");
+}
 
 function buildPrompt(input: InsightsRequest, currentYear: number): string {
   return [
-    "Voce e um analista financeiro. Analise os dados mensais de um usuario brasileiro e responda em portugues do Brasil.",
+    "Voce e um consultor financeiro. Analise os dados mensais de um usuario brasileiro e responda em portugues do Brasil, de forma pratica e realista. NUNCA de conselhos genericos.",
     "",
     `Renda mensal: R$ ${input.monthlyIncome}`,
     `Gastos mensais: R$ ${input.monthlyExpenses}`,
     `Patrimonio atual: R$ ${input.netWorth}`,
+    "",
+    "Gastos por categoria:",
+    formatBreakdown(input.spendingBreakdown),
+    "",
+    "Patrimonio por categoria:",
+    formatBreakdown(input.assetBreakdown),
     "",
     "Calcule:",
     "1. healthScore (0 a 100): considere a taxa de poupanca ((renda - gastos) / renda), a relacao gastos/renda e o folego do patrimonio (patrimonio dividido pelos gastos mensais, em meses). Mais sobra e mais folego = score maior.",
@@ -52,6 +84,8 @@ function buildPrompt(input: InsightsRequest, currentYear: number): string {
     "3. insight: uma unica frase curta de recomendacao pratica.",
     "4. steps: exatamente 4 marcos de evolucao [{label, percent, status}]. O primeiro deve ser 'Hoje' com percent = healthScore; os outros 3 sao metas crescentes ate 'Liberdade financeira' com percent 100.",
     `5. projection5y: patrimonio projetado para os proximos 5 anos [{year, value}], comecando em ${currentYear}, assumindo que a sobra mensal (renda - gastos) e investida e rende ao longo do tempo.`,
+    "6. projectionExplanation: explique em detalhe (2 a 4 frases) como essa projecao foi calculada — as premissas (sobra mensal investida, taxa de rendimento assumida), o que mais influencia o resultado e o que o usuario pode fazer pra melhorar a curva.",
+    "7. recommendations: de 3 a 5 recomendacoes praticas e ESPECIFICAS, citando as categorias reais de gasto/patrimonio listadas acima (ex: renegociar/cortar uma categoria especifica de gasto, realocar um ativo concreto). Cada uma com: title (curto), description (acao concreta e o porque, com numeros quando possivel), priority ('alta', 'media' ou 'baixa'). Nada generico.",
   ].join("\n");
 }
 
