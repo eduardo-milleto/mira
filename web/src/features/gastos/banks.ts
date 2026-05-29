@@ -12,6 +12,7 @@ export const BANKS = [
   "BTG Pactual",
   "XP",
   "American Express",
+  "Renner",
   "Banrisul",
   "PicPay",
   "Mercado Pago",
