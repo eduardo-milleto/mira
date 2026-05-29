@@ -1,8 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
-const CSRF_COOKIE = "mira_csrf";
-const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
-
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -11,22 +8,12 @@ export class ApiError extends Error {
   }
 }
 
-// le o token CSRF que o backend deixa num cookie legivel pelo JS
-function readCsrf(): string | null {
-  const match = document.cookie.match(new RegExp(`(?:^|; )${CSRF_COOKIE}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const method = (options.method ?? "GET").toUpperCase();
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
 
-  if (MUTATING.has(method)) {
-    const csrf = readCsrf();
-    if (csrf) headers.set("X-CSRF-Token", csrf);
-  }
-
+  // CSRF e validado por Origin no backend; o cookie de sessao vai via credentials:include
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     method,
