@@ -41,3 +41,16 @@ npm run dev
 
 - **Vercel** → root `web`, build `vite build`, output `dist`
 - **Railway** → root `api`, Postgres addon, release roda `prisma migrate deploy`
+
+### Sessao (cookies) em producao
+
+O cookie de sessao e httpOnly e setado pela API. Pro Safari nao bloquear (cookie de
+terceiro), a **API precisa ser same-site com o front** — ou seja, num subdominio do mesmo
+dominio. Config de prod:
+
+- Front em `mirafinance.app`, API em `api.mirafinance.app` (dominio custom no Railway + CNAME)
+- Railway:
+  - `NODE_ENV=production` (sem isso o cookie vira `Lax`/sem `Secure` e quebra)
+  - `CORS_ORIGIN=https://mirafinance.app`
+  - `COOKIE_DOMAIN=.mirafinance.app` (sem isso o front nao le o cookie CSRF e as requests mutantes caem em 403)
+- Vercel: `VITE_API_URL=https://api.mirafinance.app`

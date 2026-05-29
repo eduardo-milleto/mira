@@ -9,6 +9,9 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   // opcional: sem ela a rota /insights responde 503, mas o resto da api sobe normal
   GEMINI_API_KEY: z.string().min(1).optional(),
+  // dominio dos cookies em prod (ex: ".mirafinance.app") pra valerem entre front e api (subdominios).
+  // sem isso o front nao le o cookie CSRF e toda request mutante cai em 403. em dev fica vazio (host-only).
+  COOKIE_DOMAIN: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
