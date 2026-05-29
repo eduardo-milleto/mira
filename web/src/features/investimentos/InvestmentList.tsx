@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Landmark, Pencil, Plus, TrendingUp, Trash2 } from "lucide-react";
+import { ChevronRight, Landmark, Pencil, Plus, TrendingUp, Trash2 } from "lucide-react";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { cn } from "../../lib/cn";
 import { formatBRL } from "../../lib/format";
 import { InvestmentFormModal } from "./InvestmentFormModal";
+import { InvestmentTimeline } from "./InvestmentTimeline";
 import { buildPatrimony } from "./patrimony";
 import {
   investmentKindOf,
@@ -60,6 +62,8 @@ export function InvestmentList({ kind }: { kind: InvestmentKind }) {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Investment | undefined>();
   const [toDelete, setToDelete] = useState<Investment | undefined>();
+  // qual ativo esta com a linha do tempo aberta (clicar na linha expande)
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   function openCreate() {
     setEditing(undefined);
@@ -107,41 +111,65 @@ export function InvestmentList({ kind }: { kind: InvestmentKind }) {
                   <span className="tnum text-sm text-muted">{formatBRL(total)}</span>
                 </div>
                 <div className="divide-y divide-border">
-                  {group.items.map((inv) => (
-                    <div key={inv.id} className="flex items-center gap-4 px-5 py-4">
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm text-heading">{inv.name}</p>
-                        {(inv.expectedReturnPct != null || inv.notes) && (
-                          <p className="truncate text-xs text-faint">
-                            {inv.expectedReturnPct != null && (
-                              <span className="tnum">{inv.expectedReturnPct}% a.a.</span>
+                  {group.items.map((inv) => {
+                    const isOpen = expanded === inv.id;
+                    // taxa exibida: a realizada do histórico quando houver, senão a manual
+                    const rate = inv.realizedReturnPct ?? inv.expectedReturnPct;
+                    const rateRealized = inv.realizedReturnPct != null;
+                    return (
+                      <div key={inv.id}>
+                        <div
+                          className="flex cursor-pointer items-center gap-3 px-5 py-4 transition hover:bg-white/[0.02]"
+                          onClick={() => setExpanded(isOpen ? null : inv.id)}
+                        >
+                          <ChevronRight
+                            className={cn(
+                              "h-4 w-4 shrink-0 text-faint transition-transform",
+                              isOpen && "rotate-90",
                             )}
-                            {inv.expectedReturnPct != null && inv.notes && " · "}
-                            {inv.notes}
-                          </p>
-                        )}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm text-heading">{inv.name}</p>
+                            {(rate != null || inv.notes) && (
+                              <p className="truncate text-xs text-faint">
+                                {rate != null && (
+                                  <span className="tnum">
+                                    {rate}% a.a.{rateRealized ? " (realizado)" : ""}
+                                  </span>
+                                )}
+                                {rate != null && inv.notes && " · "}
+                                {inv.notes}
+                              </p>
+                            )}
+                          </div>
+                          <span className="tnum shrink-0 text-sm text-heading">{formatBRL(inv.value)}</span>
+                          {/* stopPropagation: clicar em editar/excluir nao expande a linha */}
+                          <div
+                            className="flex shrink-0 items-center gap-1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => openEdit(inv)}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-faint transition hover:bg-white/5 hover:text-heading"
+                              aria-label={copy.editLabel}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setToDelete(inv)}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-faint transition hover:bg-white/5 hover:text-negative"
+                              aria-label={copy.deleteLabel}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        {isOpen && <InvestmentTimeline investment={inv} />}
                       </div>
-                      <span className="tnum shrink-0 text-sm text-heading">{formatBRL(inv.value)}</span>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(inv)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-faint transition hover:bg-white/5 hover:text-heading"
-                          aria-label={copy.editLabel}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setToDelete(inv)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-faint transition hover:bg-white/5 hover:text-negative"
-                          aria-label={copy.deleteLabel}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </Card>
             );

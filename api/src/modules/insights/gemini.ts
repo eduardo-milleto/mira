@@ -113,20 +113,35 @@ function formatInvestments(
     .join("\n");
 }
 
+// descreve os fechamentos de mes: o que o app calculou vs o confirmado. a diferenca (com
+// motivo) e o sinal de que entrou/saiu dinheiro fora do app — relevante pra IA entender
+function formatMonthCloses(
+  items: { month: string; computedSurplus: number; confirmedSurplus: number; reason?: string | null }[],
+): string {
+  if (!items.length) return "(nenhum)";
+  return items
+    .map((c) => {
+      const diff = c.confirmedSurplus - c.computedSurplus;
+      const tag =
+        Math.abs(diff) < 0.005
+          ? "bateu com o app"
+          : `diferenca de R$ ${diff.toFixed(2)}${c.reason ? ` — motivo: ${c.reason}` : " (sem motivo informado)"}`;
+      return `- ${c.month}: app calculou R$ ${c.computedSurplus}, confirmado R$ ${c.confirmedSurplus} (${tag})`;
+    })
+    .join("\n");
+}
+
 function buildPrompt(input: InsightsRequest, currentYear: number): string {
   const horizon = input.horizonYears;
   const endYear = currentYear + horizon - 1;
-  const returnRate =
-    input.returnRatePct !== undefined
-      ? `${input.returnRatePct}% ao ano`
-      : "uma taxa de mercado realista que voce assumir";
 
   return [
     "Voce e um consultor financeiro. Analise os dados mensais de um usuario brasileiro e responda em portugues do Brasil, de forma pratica e realista. NUNCA de conselhos genericos.",
     "",
     `Renda mensal: R$ ${input.monthlyIncome}`,
     `Gastos mensais: R$ ${input.monthlyExpenses}`,
-    `Patrimonio atual: R$ ${input.netWorth}`,
+    `Patrimonio atual (soma dos investimentos): R$ ${input.netWorth}`,
+    `Saldo parado no cofre (sobra ainda NAO investida; caixa que nao rende): R$ ${input.cofreBalance}`,
     "",
     "Gastos por categoria:",
     formatBreakdown(input.spendingBreakdown),
@@ -134,24 +149,27 @@ function buildPrompt(input: InsightsRequest, currentYear: number): string {
     "Patrimonio por categoria:",
     formatBreakdown(input.assetBreakdown),
     "",
-    "Fontes de renda (com premissa de crescimento e rendas futuras):",
+    "Fontes de renda (contexto pra saude financeira e recomendacoes):",
     formatIncomes(input.incomeSources, currentYear),
     "",
-    "Investimentos (premissa de rendimento por ativo):",
+    "Investimentos (taxa = rentabilidade REALIZADA do historico quando existe; senao, a inferir):",
     formatInvestments(input.investments),
+    "",
+    "Fechamentos de mes (app calculou x usuario confirmou; a diferenca revela ganho/gasto FORA do app):",
+    formatMonthCloses(input.monthCloses),
     "",
     "Premissas da projecao:",
     `- Horizonte: ${horizon} anos (de ${currentYear} a ${endYear}).`,
-    `- Taxa de rendimento da sobra investida: ${returnRate}.`,
+    "- A projecao e HONESTA: o usuario NAO reinveste a sobra automaticamente.",
     "",
     "Calcule:",
-    "1. healthScore (0 a 100): considere a taxa de poupanca ((renda - gastos) / renda), a relacao gastos/renda e o folego do patrimonio (patrimonio dividido pelos gastos mensais, em meses). Mais sobra e mais folego = score maior.",
+    "1. healthScore (0 a 100): considere a taxa de poupanca ((renda - gastos) / renda), a relacao gastos/renda, o folego do patrimonio (patrimonio dividido pelos gastos mensais, em meses) e a liquidez parada no cofre. Mais sobra e mais folego = score maior.",
     "2. status: rotulo curto (ex: 'Critica', 'Atencao', 'Boa', 'Muito boa', 'Excelente').",
     "3. insight: uma unica frase curta de recomendacao pratica.",
     "4. steps: exatamente 4 marcos de evolucao [{label, percent, status}]. O primeiro deve ser 'Hoje' com percent = healthScore; os outros 3 sao metas crescentes ate 'Liberdade financeira' com percent 100.",
-    `5. projection: patrimonio projetado para ${horizon} anos [{year, value}], um ponto por ano de ${currentYear} a ${endYear}. O patrimonio inicial JA E a soma dos investimentos listados acima; faca CADA ativo crescer pela sua taxa esperada (ou, quando ausente, uma taxa realista que voce inferir pela categoria/notes do ativo). A sobra mensal (renda - gastos) e um APORTE NOVO que entra ao longo dos anos e rende a ${returnRate}. Some o rendimento do estoque de ativos com os aportes novos — eles se SOMAM, NUNCA se sobrepoem (nao conte a sobra investida duas vezes). Faca tambem cada fonte de renda crescer pelo seu percentual ao ano e some as rendas futuras a partir do ano de inicio delas. Quando uma renda tiver "valores definidos" para anos especificos, use exatamente esse valor naquele ano em diante (ele sobrescreve o crescimento percentual ate o proximo valor definido; depois volta a crescer pelo percentual).`,
-    "6. projectionExplanation: explique em detalhe (2 a 4 frases) como essa projecao foi calculada — as premissas (rendimento de cada investimento, crescimento de cada renda, rendas futuras, sobra mensal investida, taxa de rendimento), o que mais influencia o resultado e o que o usuario pode fazer pra melhorar a curva.",
-    "7. recommendations: de 3 a 5 recomendacoes praticas e ESPECIFICAS, citando as categorias reais de gasto/patrimonio/renda listadas acima (ex: renegociar/cortar uma categoria especifica de gasto, acelerar uma renda futura, realocar um ativo concreto). Cada uma com: title (curto), description (acao concreta e o porque, com numeros quando possivel), priority ('alta', 'media' ou 'baixa'). Nada generico.",
+    `5. projection: patrimonio projetado para ${horizon} anos [{year, value}], um ponto por ano de ${currentYear} a ${endYear}. O patrimonio inicial JA E a soma dos investimentos listados acima. Faca CADA ativo crescer SOMENTE pela sua taxa (a informada e a realizada do historico; quando ausente, infira uma taxa realista pela categoria/notes). NAO injete a sobra mensal nem o saldo do cofre como aporte automatico — o usuario NAO reinveste sozinho, entao esse dinheiro fica parado, nao entra na curva do patrimonio e nao rende. A projecao cresce APENAS pelo rendimento dos proprios ativos; se o usuario nao aportar, ela cresce devagar de proposito (retrato honesto de nao reinvestir).`,
+    `6. projectionExplanation: explique (2 a 4 frases) que a curva cresce so pelo rendimento dos ativos (cite as taxas), que a sobra mensal NAO esta sendo reinvestida — fica parada no cofre (R$ ${input.cofreBalance}) sem render — e que pra acelerar o patrimonio o usuario precisa aportar esse dinheiro nos investimentos. Se os fechamentos de mes mostrarem diferencas, mencione o que isso revela (gasto/ganho fora do app).`,
+    "7. recommendations: de 3 a 5 recomendacoes praticas e ESPECIFICAS, citando as categorias reais de gasto/patrimonio/renda. Se ha saldo parado no cofre, priorize recomendar aportar (quanto e em que tipo de ativo). Use os motivos dos fechamentos de mes pra apontar vazamentos fora do app. Cada uma com: title (curto), description (acao concreta e o porque, com numeros quando possivel), priority ('alta', 'media' ou 'baixa'). Nada generico.",
   ].join("\n");
 }
 

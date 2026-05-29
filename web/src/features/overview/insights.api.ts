@@ -7,6 +7,7 @@ import { useIncomes, useProjectionSettings } from "../projecoes/projecoes.api";
 import { investmentKindOf, useInvestments, type InvestmentKind } from "../investimentos/investimentos.api";
 import { buildPatrimony } from "../investimentos/patrimony";
 import { usePersonalSummary } from "../gastos-pessoais/personal.api";
+import { useCofre } from "../cofre/cofre.api";
 
 export type EvolutionStep = { label: string; percent: number; status: string };
 export type ProjectionPoint = { year: string; value: number };
@@ -38,6 +39,13 @@ export type InvestmentInput = {
   notes: string | null;
 };
 
+export type MonthCloseInput = {
+  month: string;
+  computedSurplus: number;
+  confirmedSurplus: number;
+  reason: string | null;
+};
+
 export type InsightsInput = {
   monthlyIncome: number;
   monthlyExpenses: number;
@@ -48,6 +56,8 @@ export type InsightsInput = {
   investments: InvestmentInput[];
   returnRatePct: number;
   horizonYears: number;
+  cofreBalance: number;
+  monthCloses: MonthCloseInput[];
 };
 
 // calcula saude financeira + projecao + recomendacoes via Gemini (backend).
@@ -75,13 +85,15 @@ export function useInsightsData(kindFilter?: InvestmentKind) {
   const investmentsQuery = useInvestments(!!user);
   // projecao usa o gasto pessoal do mes atual (typical), nao o mes selecionado na Visao geral
   const personalQuery = usePersonalSummary(undefined, !!user);
+  const cofreQuery = useCofre(!!user);
   const loading =
     expensesQuery.isLoading ||
     cardsQuery.isLoading ||
     incomesQuery.isLoading ||
     settingsQuery.isLoading ||
     investmentsQuery.isLoading ||
-    personalQuery.isLoading;
+    personalQuery.isLoading ||
+    cofreQuery.isLoading;
 
   const spending = buildSpending(
     expensesQuery.data ?? [],
@@ -119,11 +131,20 @@ export function useInsightsData(kindFilter?: InvestmentKind) {
       name: i.name,
       category: i.category,
       value: i.value,
-      expectedReturnPct: i.expectedReturnPct,
+      // taxa efetiva: a realizada do historico quando existe, senao a expectativa manual
+      expectedReturnPct: i.realizedReturnPct ?? i.expectedReturnPct,
       notes: i.notes,
     })),
     returnRatePct: settings?.returnRatePct ?? 10,
     horizonYears: settings?.horizonYears ?? 5,
+    // caixa parada no cofre + fechamentos de mes (contexto pra IA: vazamentos fora do app)
+    cofreBalance: cofreQuery.data?.balance ?? 0,
+    monthCloses: (cofreQuery.data?.closes ?? []).map((c) => ({
+      month: c.month,
+      computedSurplus: c.computedSurplus,
+      confirmedSurplus: c.confirmedSurplus,
+      reason: c.reason,
+    })),
   };
 
   // so dispara quando gasto, fontes e premissas ja carregaram (evita chamada incompleta)

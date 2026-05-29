@@ -24,6 +24,15 @@ const investment = z.object({
   notes: z.string().nullable().optional(),
 });
 
+// fechamento de mes confirmado: o que o app calculou vs o que o usuario confirmou.
+// a diferenca (com motivo) revela ganho/gasto que passou FORA do app — contexto pra IA
+const monthClose = z.object({
+  month: z.string(),
+  computedSurplus: z.number(),
+  confirmedSurplus: z.number(),
+  reason: z.string().nullable().optional(),
+});
+
 // entrada: numeros do mes + quebras por categoria (pra recomendacao ser especifica)
 // + premissas de projecao (fontes de renda, taxa de rendimento, horizonte)
 export const insightsRequestSchema = z.object({
@@ -36,6 +45,9 @@ export const insightsRequestSchema = z.object({
   investments: z.array(investment).optional().default([]),
   returnRatePct: z.number().optional(),
   horizonYears: z.number().int().min(1).max(30).optional().default(5),
+  // saldo parado no cofre (caixa nao investida) + fechamentos de mes (contexto pra IA)
+  cofreBalance: z.number().optional().default(0),
+  monthCloses: z.array(monthClose).optional().default([]),
 });
 
 // saida esperada do Gemini (validada de forma defensiva antes de devolver)
