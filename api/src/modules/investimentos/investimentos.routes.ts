@@ -8,6 +8,7 @@ import { investmentCreateSchema, investmentUpdateSchema } from "./investimentos.
 function publicInvestment(i: Investment) {
   return {
     id: i.id,
+    kind: i.kind,
     name: i.name,
     category: i.category,
     value: i.value.toNumber(),
@@ -37,6 +38,7 @@ export async function investimentosRoutes(app: FastifyInstance) {
     const investment = await prisma.investment.create({
       data: {
         userId: request.user.sub,
+        kind: parsed.data.kind,
         name: parsed.data.name,
         category: parsed.data.category,
         value: parsed.data.value,

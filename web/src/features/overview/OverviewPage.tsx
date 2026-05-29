@@ -6,7 +6,7 @@ import { formatBRL } from "../../lib/format";
 import { useSession } from "../auth/auth.api";
 import { useCreditCards, useExpenses } from "../gastos/gastos.api";
 import { buildSpending } from "../gastos/spending";
-import { useInvestments } from "../investimentos/investimentos.api";
+import { investmentKindOf, useInvestments } from "../investimentos/investimentos.api";
 import { buildPatrimony } from "../investimentos/patrimony";
 import { usePersonalSummary } from "../gastos-pessoais/personal.api";
 import { HeroCard } from "./HeroCard";
@@ -26,6 +26,29 @@ function CardHeader({ title, period }: { title: string; period?: string }) {
   );
 }
 
+// uma das duas partes do patrimonio (Investimentos / Patrimonio) com subtotal + breakdown
+function PatrimonySection({
+  label,
+  total,
+  items,
+}: {
+  label: string;
+  total: number;
+  items: { name: string; value: number; percent: number }[];
+}) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-4">
+        <span className="text-xs uppercase tracking-wide text-faint">{label}</span>
+        <span className="tnum text-sm text-muted">{formatBRL(total)}</span>
+      </div>
+      <div className="mt-3">
+        <BreakdownList items={items} />
+      </div>
+    </div>
+  );
+}
+
 export function OverviewPage() {
   const { data: user } = useSession();
   const expensesQuery = useExpenses(!!user);
@@ -39,7 +62,11 @@ export function OverviewPage() {
   );
 
   const investmentsQuery = useInvestments(!!user);
-  const patrimony = buildPatrimony(investmentsQuery.data ?? []);
+  const allAssets = investmentsQuery.data ?? [];
+  const patrimony = buildPatrimony(allAssets); // total geral (patrimonio + investimentos)
+  // duas seccoes: investimentos (kind ausente conta aqui) e patrimonio (bens)
+  const investSection = buildPatrimony(allAssets.filter((i) => investmentKindOf(i) === "investimento"));
+  const bensSection = buildPatrimony(allAssets.filter((i) => investmentKindOf(i) === "patrimonio"));
 
   // mesma fonte de insights da Sugestoes IA e Projecoes (renda das fontes + premissas + gasto real)
   const insights = useInsightsData();
@@ -85,13 +112,33 @@ export function OverviewPage() {
             {investmentsQuery.isLoading ? (
               <p className="text-sm text-muted">Carregando...</p>
             ) : patrimony.items.length ? (
-              <BreakdownList items={patrimony.items} />
+              <div className="flex flex-col gap-6">
+                {investSection.items.length > 0 && (
+                  <PatrimonySection
+                    label="Investimentos"
+                    total={investSection.total}
+                    items={investSection.items}
+                  />
+                )}
+                {bensSection.items.length > 0 && (
+                  <PatrimonySection
+                    label="Patrimônio"
+                    total={bensSection.total}
+                    items={bensSection.items}
+                  />
+                )}
+              </div>
             ) : (
               <p className="text-sm text-muted">
-                Nenhum investimento cadastrado.{" "}
+                Nada cadastrado ainda.{" "}
                 <Link to="/investimentos" className="text-brand transition hover:text-brand-dark">
                   Adicionar investimentos
+                </Link>{" "}
+                ou{" "}
+                <Link to="/patrimonio" className="text-brand transition hover:text-brand-dark">
+                  patrimônio
                 </Link>
+                .
               </p>
             )}
           </div>

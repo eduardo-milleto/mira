@@ -7,16 +7,28 @@ import { MoneyInput } from "../../components/ui/MoneyInput";
 import { PercentInput } from "../../components/ui/PercentInput";
 import { ComboboxField } from "../../components/ui/Combobox";
 import { cn } from "../../lib/cn";
-import { INVESTMENT_CATEGORIES } from "./categories";
-import { useCreateInvestment, useUpdateInvestment, type Investment } from "./investimentos.api";
+import { categoriesForKind } from "./categories";
+import {
+  useCreateInvestment,
+  useUpdateInvestment,
+  type Investment,
+  type InvestmentKind,
+} from "./investimentos.api";
 
 type InvestmentFormModalProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  kind: InvestmentKind; // define o tipo do item criado e as categorias sugeridas
   investment?: Investment; // presente = edicao
 };
 
-export function InvestmentFormModal({ isOpen, onOpenChange, investment }: InvestmentFormModalProps) {
+export function InvestmentFormModal({
+  isOpen,
+  onOpenChange,
+  kind,
+  investment,
+}: InvestmentFormModalProps) {
+  const isPatrimony = kind === "patrimonio";
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [value, setValue] = useState(0);
@@ -47,6 +59,8 @@ export function InvestmentFormModal({ isOpen, onOpenChange, investment }: Invest
     event.preventDefault();
     if (!valid || pending) return;
     const input = {
+      // mantem o tipo do item em edicao; na criacao usa o tipo da pagina
+      kind: investment?.kind ?? kind,
       name: name.trim(),
       category: category.trim(),
       value,
@@ -66,28 +80,41 @@ export function InvestmentFormModal({ isOpen, onOpenChange, investment }: Invest
     <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      title={investment ? "Editar investimento" : "Adicionar investimento"}
+      title={
+        investment
+          ? isPatrimony
+            ? "Editar item do patrimônio"
+            : "Editar investimento"
+          : isPatrimony
+            ? "Adicionar ao patrimônio"
+            : "Adicionar investimento"
+      }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <TextField
           label="Nome"
-          placeholder="Ex: Apto Centro, Tesouro IPCA"
+          placeholder={isPatrimony ? "Ex: Apto Centro, Carro" : "Ex: Tesouro IPCA, Carteira de ações"}
           value={name}
           onChange={setName}
           autoFocus
         />
         <ComboboxField
           label="Categoria"
-          options={INVESTMENT_CATEGORIES}
+          options={categoriesForKind(kind)}
           value={category}
           onChange={setCategory}
           placeholder="Escolha ou digite a categoria"
         />
         <MoneyInput label="Valor atual" value={value} onChange={setValue} />
         <PercentInput
-          label="Rentabilidade esperada ao ano (opcional)"
+          label={
+            isPatrimony
+              ? "Valorização esperada ao ano (opcional)"
+              : "Rentabilidade esperada ao ano (opcional)"
+          }
           value={expectedReturnPct}
           onChange={setExpectedReturnPct}
+          placeholder="Ex: 8,5"
         />
 
         <div className="flex flex-col gap-2">

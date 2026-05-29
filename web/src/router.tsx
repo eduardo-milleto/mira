@@ -16,6 +16,7 @@ import { GastosPage } from "./features/gastos/GastosPage";
 import { ProjecoesPage } from "./features/projecoes/ProjecoesPage";
 import { InsightsPage } from "./features/insights/InsightsPage";
 import { InvestimentosPage } from "./features/investimentos/InvestimentosPage";
+import { PatrimonioPage } from "./features/patrimonio/PatrimonioPage";
 
 type RouterContext = { queryClient: QueryClient };
 
@@ -91,6 +92,12 @@ const investimentosRoute = createRoute({
   component: InvestimentosPage,
 });
 
+const patrimonioRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/patrimonio",
+  component: PatrimonioPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
@@ -101,6 +108,7 @@ const routeTree = rootRoute.addChildren([
     projecoesRoute,
     insightsRoute,
     investimentosRoute,
+    patrimonioRoute,
   ]),
 ]);
 

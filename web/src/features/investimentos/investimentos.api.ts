@@ -1,8 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
 
+export type InvestmentKind = "investimento" | "patrimonio";
+
 export type Investment = {
   id: string;
+  kind: InvestmentKind;
   name: string;
   category: string;
   value: number;
@@ -12,12 +15,18 @@ export type Investment = {
 };
 
 export type InvestmentInput = {
+  kind: InvestmentKind;
   name: string;
   category: string;
   value: number;
   expectedReturnPct: number | null;
   notes: string | null;
 };
+
+// kind defensivo: dado antigo (antes da coluna existir) conta como "investimento"
+export function investmentKindOf(i: Investment): InvestmentKind {
+  return i.kind ?? "investimento";
+}
 
 export const investmentsKey = ["investments"] as const;
 
