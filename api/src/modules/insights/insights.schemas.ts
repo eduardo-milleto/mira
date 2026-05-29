@@ -10,6 +10,15 @@ const incomeSource = z.object({
   startYear: z.number().int().nullable().optional(),
 });
 
+// investimento que compoe o patrimonio, com premissa de rendimento por ativo
+const investment = z.object({
+  name: z.string(),
+  category: z.string(),
+  value: z.number(),
+  expectedReturnPct: z.number().nullable().optional(),
+  notes: z.string().nullable().optional(),
+});
+
 // entrada: numeros do mes + quebras por categoria (pra recomendacao ser especifica)
 // + premissas de projecao (fontes de renda, taxa de rendimento, horizonte)
 export const insightsRequestSchema = z.object({
@@ -19,6 +28,7 @@ export const insightsRequestSchema = z.object({
   spendingBreakdown: z.array(breakdownItem).optional().default([]),
   assetBreakdown: z.array(breakdownItem).optional().default([]),
   incomeSources: z.array(incomeSource).optional().default([]),
+  investments: z.array(investment).optional().default([]),
   returnRatePct: z.number().optional(),
   horizonYears: z.number().int().min(1).max(30).optional().default(5),
 });

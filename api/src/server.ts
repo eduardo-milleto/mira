@@ -8,6 +8,7 @@ import { authRoutes } from "./modules/auth/auth.routes.js";
 import { insightsRoutes } from "./modules/insights/insights.routes.js";
 import { gastosRoutes } from "./modules/gastos/gastos.routes.js";
 import { projecoesRoutes } from "./modules/projecoes/projecoes.routes.js";
+import { investimentosRoutes } from "./modules/investimentos/investimentos.routes.js";
 
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -37,6 +38,7 @@ export async function buildApp() {
   await app.register(insightsRoutes, { prefix: "/insights" });
   await app.register(gastosRoutes, { prefix: "/gastos" });
   await app.register(projecoesRoutes, { prefix: "/projecoes" });
+  await app.register(investimentosRoutes, { prefix: "/investimentos" });
 
   return app;
 }

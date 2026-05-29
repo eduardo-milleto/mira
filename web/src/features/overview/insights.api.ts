@@ -4,7 +4,8 @@ import { useSession } from "../auth/auth.api";
 import { useCreditCards, useExpenses } from "../gastos/gastos.api";
 import { buildSpending } from "../gastos/spending";
 import { useIncomes, useProjectionSettings } from "../projecoes/projecoes.api";
-import { assetBreakdown, netWorth } from "./data";
+import { useInvestments } from "../investimentos/investimentos.api";
+import { buildPatrimony } from "../investimentos/patrimony";
 
 export type EvolutionStep = { label: string; percent: number; status: string };
 export type ProjectionPoint = { year: string; value: number };
@@ -27,6 +28,13 @@ export type IncomeSourceInput = {
   annualGrowthPct: number;
   startYear: number | null;
 };
+export type InvestmentInput = {
+  name: string;
+  category: string;
+  value: number;
+  expectedReturnPct: number | null;
+  notes: string | null;
+};
 
 export type InsightsInput = {
   monthlyIncome: number;
@@ -35,6 +43,7 @@ export type InsightsInput = {
   spendingBreakdown: BreakdownInput[];
   assetBreakdown: BreakdownInput[];
   incomeSources: IncomeSourceInput[];
+  investments: InvestmentInput[];
   returnRatePct: number;
   horizonYears: number;
 };
@@ -59,15 +68,19 @@ export function useInsightsData() {
   const cardsQuery = useCreditCards(!!user);
   const incomesQuery = useIncomes(!!user);
   const settingsQuery = useProjectionSettings(!!user);
+  const investmentsQuery = useInvestments(!!user);
   const loading =
     expensesQuery.isLoading ||
     cardsQuery.isLoading ||
     incomesQuery.isLoading ||
-    settingsQuery.isLoading;
+    settingsQuery.isLoading ||
+    investmentsQuery.isLoading;
 
   const spending = buildSpending(expensesQuery.data ?? [], cardsQuery.data ?? []);
   const incomes = incomesQuery.data ?? [];
   const settings = settingsQuery.data;
+  const investments = investmentsQuery.data ?? [];
+  const patrimony = buildPatrimony(investments);
   const currentYear = new Date().getFullYear();
 
   // renda mensal = soma das fontes ja ativas (rendas futuras so contam a partir do startYear)
@@ -78,14 +91,21 @@ export function useInsightsData() {
   const input: InsightsInput = {
     monthlyIncome,
     monthlyExpenses: spending.total,
-    netWorth,
+    netWorth: patrimony.total,
     spendingBreakdown: spending.items.map((i) => ({ name: i.name, value: i.value })),
-    assetBreakdown: assetBreakdown.map((a) => ({ name: a.name, value: a.value })),
+    assetBreakdown: patrimony.items.map((a) => ({ name: a.name, value: a.value })),
     incomeSources: incomes.map((i) => ({
       name: i.name,
       monthlyAmount: i.monthlyAmount,
       annualGrowthPct: i.annualGrowthPct,
       startYear: i.startYear,
+    })),
+    investments: investments.map((i) => ({
+      name: i.name,
+      category: i.category,
+      value: i.value,
+      expectedReturnPct: i.expectedReturnPct,
+      notes: i.notes,
     })),
     returnRatePct: settings?.returnRatePct ?? 10,
     horizonYears: settings?.horizonYears ?? 5,
