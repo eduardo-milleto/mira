@@ -21,8 +21,9 @@ export const investmentCreateSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome").max(80),
   category: z.string().trim().min(1, "Informe a categoria").max(40),
   value: money,
-  expectedReturnPct: pct.optional(), // omitido = a IA infere pela categoria/notes
-  notes: z.string().trim().max(500).optional(),
+  // vazio (omitido ou null) = a IA infere pela categoria/notes
+  expectedReturnPct: pct.nullish(),
+  notes: z.string().trim().max(500).nullish(),
 });
 
 // no update tudo opcional, mas precisa vir pelo menos um campo.
