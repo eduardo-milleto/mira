@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
   { icon: BarChart3, label: "Projeções", to: "/projecoes" },
   { icon: Sparkles, label: "Sugestões IA", to: "/sugestoes" },
   { icon: Coins, label: "Potenciais rendas" },
-  { icon: Target, label: "Investimentos" },
+  { icon: Target, label: "Investimentos", to: "/investimentos" },
 ];
 
 const navBase = "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm outline-none transition";

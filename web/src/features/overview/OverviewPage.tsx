@@ -6,11 +6,13 @@ import { formatBRL } from "../../lib/format";
 import { useSession } from "../auth/auth.api";
 import { useCreditCards, useExpenses } from "../gastos/gastos.api";
 import { buildSpending } from "../gastos/spending";
+import { useInvestments } from "../investimentos/investimentos.api";
+import { buildPatrimony } from "../investimentos/patrimony";
 import { HeroCard } from "./HeroCard";
 import { ProjectionChart } from "./ProjectionChart";
 import { BreakdownList } from "./BreakdownList";
 import { useInsightsData } from "./insights.api";
-import { assetBreakdown, featureLinks, netWorth } from "./data";
+import { featureLinks } from "./data";
 
 function CardHeader({ title, period }: { title: string; period?: string }) {
   return (
@@ -29,6 +31,9 @@ export function OverviewPage() {
   const cardsQuery = useCreditCards(!!user);
   const spendingLoading = expensesQuery.isLoading || cardsQuery.isLoading;
   const spending = buildSpending(expensesQuery.data ?? [], cardsQuery.data ?? []);
+
+  const investmentsQuery = useInvestments(!!user);
+  const patrimony = buildPatrimony(investmentsQuery.data ?? []);
 
   // mesma fonte de insights da Sugestoes IA e Projecoes (renda das fontes + premissas + gasto real)
   const insights = useInsightsData();
@@ -68,10 +73,21 @@ export function OverviewPage() {
         <Card className="p-6">
           <CardHeader title="Patrimônio" period="Atual" />
           <p className="tnum mt-2 text-3xl font-light tracking-tighter text-heading">
-            {formatBRL(netWorth)}
+            {formatBRL(patrimony.total)}
           </p>
           <div className="mt-5">
-            <BreakdownList items={assetBreakdown} />
+            {investmentsQuery.isLoading ? (
+              <p className="text-sm text-muted">Carregando...</p>
+            ) : patrimony.items.length ? (
+              <BreakdownList items={patrimony.items} />
+            ) : (
+              <p className="text-sm text-muted">
+                Nenhum investimento cadastrado.{" "}
+                <Link to="/investimentos" className="text-brand transition hover:text-brand-dark">
+                  Adicionar investimentos
+                </Link>
+              </p>
+            )}
           </div>
         </Card>
       </div>
