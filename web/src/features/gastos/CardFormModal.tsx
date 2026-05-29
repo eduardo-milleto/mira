@@ -6,6 +6,7 @@ import { MoneyInput } from "../../components/ui/MoneyInput";
 import { ComboboxField } from "../../components/ui/Combobox";
 import { Switch } from "../../components/ui/Switch";
 import { BANKS } from "./banks";
+import { CARD_BRANDS } from "./brands";
 import { useCreateCard, useUpdateCard, type CreditCard } from "./gastos.api";
 
 type CardFormModalProps = {
@@ -17,6 +18,7 @@ type CardFormModalProps = {
 export function CardFormModal({ isOpen, onOpenChange, card }: CardFormModalProps) {
   const [name, setName] = useState("");
   const [bank, setBank] = useState("");
+  const [brand, setBrand] = useState("");
   const [avgMonthlySpend, setAvgMonthlySpend] = useState(0);
   const [includeInMonthly, setIncludeInMonthly] = useState(false);
   const create = useCreateCard();
@@ -28,6 +30,7 @@ export function CardFormModal({ isOpen, onOpenChange, card }: CardFormModalProps
     if (isOpen) {
       setName(card?.name ?? "");
       setBank(card?.bank ?? "");
+      setBrand(card?.brand ?? "");
       setAvgMonthlySpend(card?.avgMonthlySpend ?? 0);
       setIncludeInMonthly(card?.includeInMonthly ?? false);
       create.reset();
@@ -36,12 +39,22 @@ export function CardFormModal({ isOpen, onOpenChange, card }: CardFormModalProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, card]);
 
-  const valid = name.trim().length > 0 && bank.trim().length > 0 && avgMonthlySpend > 0;
+  const valid =
+    name.trim().length > 0 &&
+    bank.trim().length > 0 &&
+    brand.trim().length > 0 &&
+    avgMonthlySpend > 0;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!valid || pending) return;
-    const input = { name: name.trim(), bank: bank.trim(), avgMonthlySpend, includeInMonthly };
+    const input = {
+      name: name.trim(),
+      bank: bank.trim(),
+      brand: brand.trim(),
+      avgMonthlySpend,
+      includeInMonthly,
+    };
     const onSuccess = () => onOpenChange(false);
     if (card) {
       update.mutate({ id: card.id, input }, { onSuccess });
@@ -66,6 +79,13 @@ export function CardFormModal({ isOpen, onOpenChange, card }: CardFormModalProps
           value={bank}
           onChange={setBank}
           placeholder="Escolha ou digite o banco"
+        />
+        <ComboboxField
+          label="Bandeira"
+          options={CARD_BRANDS}
+          value={brand}
+          onChange={setBrand}
+          placeholder="Escolha ou digite a bandeira"
         />
         <MoneyInput label="Gasto medio mensal" value={avgMonthlySpend} onChange={setAvgMonthlySpend} />
 
