@@ -12,6 +12,7 @@ export type CreditCard = {
   id: string;
   name: string;
   bank: string;
+  brand: string | null; // null em cartoes criados antes do campo bandeira
   avgMonthlySpend: number;
   includeInMonthly: boolean;
   createdAt: string;
@@ -21,6 +22,7 @@ export type ExpenseInput = { name: string; amount: number };
 export type CardInput = {
   name: string;
   bank: string;
+  brand: string;
   avgMonthlySpend: number;
   includeInMonthly: boolean;
 };

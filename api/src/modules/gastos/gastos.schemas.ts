@@ -21,6 +21,7 @@ export const expenseUpdateSchema = expenseCreateSchema
 export const cardCreateSchema = z.object({
   name: z.string().trim().min(1, "Informe o apelido do cartao").max(80),
   bank: z.string().trim().min(1, "Informe o banco").max(40),
+  brand: z.string().trim().min(1, "Informe a bandeira").max(40),
   avgMonthlySpend: money,
   includeInMonthly: z.boolean().optional().default(false),
 });
@@ -30,6 +31,7 @@ export const cardUpdateSchema = z
   .object({
     name: z.string().trim().min(1, "Informe o apelido do cartao").max(80),
     bank: z.string().trim().min(1, "Informe o banco").max(40),
+    brand: z.string().trim().min(1, "Informe a bandeira").max(40),
     avgMonthlySpend: money,
     includeInMonthly: z.boolean(),
   })
