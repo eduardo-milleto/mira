@@ -98,7 +98,7 @@ export function OverviewPage() {
 
   // ganhos do mes = renda recorrente ativa no ano + ganhos extras do mes
   const incomesQuery = useIncomes(!!user);
-  const earnings = buildEarnings(incomesQuery.data ?? [], monthYear);
+  const earnings = buildEarnings(incomesQuery.data ?? [], monthYear, monthYear);
   const ganhosTotal = earnings.total + (extrasQuery.data?.ganhoTotal ?? 0);
   const monthLoading = spendingLoading || incomesQuery.isLoading;
   const resultado = ganhosTotal - spending.total; // o que sobra: ganhos - gastos

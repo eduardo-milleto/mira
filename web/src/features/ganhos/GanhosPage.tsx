@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BarChart3, Info, PieChart, Sparkles } from "lucide-react";
 import { Card } from "../../components/ui/Card";
 import { FeatureCard } from "../../components/FeatureCard";
@@ -33,7 +34,11 @@ export function GanhosPage() {
   const { data: user } = useSession();
   const { data: incomes, isLoading } = useIncomes(!!user);
   const currentYear = new Date().getFullYear();
-  const earnings = buildEarnings(incomes ?? [], currentYear);
+  // ano de referencia da renda futura: por padrao o ano que vem, ajustavel pelo stepper
+  const minFutureYear = currentYear + 1;
+  const maxFutureYear = currentYear + 30;
+  const [futureYear, setFutureYear] = useState(minFutureYear);
+  const earnings = buildEarnings(incomes ?? [], currentYear, futureYear);
   const hasIncome = earnings.slices.length > 0;
 
   // ganhos extras do mes corrente entram no total do hero (renda recorrente + extras)
@@ -61,12 +66,19 @@ export function GanhosPage() {
         </Card>
 
         <Card className="p-6">
-          <CardHeader title="Renda ativa vs futura" period="Este mês" />
+          <CardHeader title="Renda ativa vs futura" />
           <div className="mt-6">
             {isLoading ? (
               <p className="text-sm text-muted">Carregando...</p>
             ) : (
-              <ActiveVsFuture active={earnings.activeColumn} future={earnings.futureColumn} />
+              <ActiveVsFuture
+                active={earnings.activeValue}
+                future={earnings.futureValue}
+                futureYear={futureYear}
+                minYear={minFutureYear}
+                maxYear={maxFutureYear}
+                onYearChange={(y) => setFutureYear(Math.min(maxFutureYear, Math.max(minFutureYear, y)))}
+              />
             )}
           </div>
         </Card>
