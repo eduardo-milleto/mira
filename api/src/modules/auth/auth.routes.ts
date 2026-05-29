@@ -1,15 +1,8 @@
-import { randomBytes } from "node:crypto";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import type { User } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import { hashPassword, verifyPassword } from "../../lib/password.js";
-import {
-  CSRF_COOKIE,
-  SESSION_COOKIE,
-  clearCookieOptions,
-  csrfCookieOptions,
-  sessionCookieOptions,
-} from "../../lib/cookies.js";
+import { SESSION_COOKIE, clearCookieOptions, sessionCookieOptions } from "../../lib/cookies.js";
 import { authenticate } from "../../plugins/auth.js";
 import { loginSchema, registerSchema } from "./auth.schemas.js";
 
@@ -18,13 +11,10 @@ function publicUser(user: User) {
   return { id: user.id, name: user.name, email: user.email, createdAt: user.createdAt };
 }
 
-// assina o JWT e seta os cookies de sessao + csrf
+// assina o JWT e seta o cookie de sessao (CSRF e por validacao de Origin no server.ts)
 function startSession(reply: FastifyReply, user: User, remember: boolean) {
   const token = reply.server.jwt.sign({ sub: user.id }, { expiresIn: remember ? "30d" : "1d" });
-  const csrf = randomBytes(32).toString("hex");
-
   reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions(remember));
-  reply.setCookie(CSRF_COOKIE, csrf, csrfCookieOptions());
 }
 
 export async function authRoutes(app: FastifyInstance) {
@@ -68,7 +58,6 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.post("/logout", { preHandler: authenticate }, async (_request, reply) => {
     reply.clearCookie(SESSION_COOKIE, clearCookieOptions());
-    reply.clearCookie(CSRF_COOKIE, { ...csrfCookieOptions(), maxAge: undefined });
     return reply.send({ ok: true });
   });
 

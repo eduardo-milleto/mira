@@ -1,22 +1,13 @@
-import { timingSafeEqual } from "node:crypto";
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import { env } from "./env.js";
-import { CSRF_COOKIE, SESSION_COOKIE } from "./lib/cookies.js";
+import { SESSION_COOKIE } from "./lib/cookies.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { insightsRoutes } from "./modules/insights/insights.routes.js";
 
-// rotas que estabelecem sessao nao tem token CSRF ainda, entao ficam de fora da checagem
-const CSRF_EXEMPT = new Set(["/auth/login", "/auth/register"]);
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
-
-function tokensMatch(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
-}
 
 export async function buildApp() {
   const app = Fastify({ logger: true });
@@ -28,18 +19,13 @@ export async function buildApp() {
     cookie: { cookieName: SESSION_COOKIE, signed: false },
   });
 
-  // CSRF double-submit: o header precisa bater com o cookie legivel pelo JS
+  // CSRF por validacao de Origin: requests mutantes precisam vir da origem confiavel.
+  // o navegador seta o header Origin e nao deixa o JS forja-lo, entao isso barra CSRF
+  // cross-site sem depender de cookie legivel pelo front (que nao funciona cross-domain).
   app.addHook("preHandler", async (request, reply) => {
     if (!MUTATING.has(request.method)) return;
-    const path = request.url.split("?")[0];
-    if (CSRF_EXEMPT.has(path)) return;
-
-    const header = request.headers["x-csrf-token"];
-    const cookieToken = request.cookies[CSRF_COOKIE];
-    const headerToken = Array.isArray(header) ? header[0] : header;
-
-    if (!cookieToken || !headerToken || !tokensMatch(headerToken, cookieToken)) {
-      return reply.code(403).send({ error: "CSRF token invalido" });
+    if (request.headers.origin !== env.CORS_ORIGIN) {
+      return reply.code(403).send({ error: "Origem nao permitida" });
     }
   });
 

@@ -44,13 +44,13 @@ npm run dev
 
 ### Sessao (cookies) em producao
 
-O cookie de sessao e httpOnly e setado pela API. Pro Safari nao bloquear (cookie de
-terceiro), a **API precisa ser same-site com o front** — ou seja, num subdominio do mesmo
-dominio. Config de prod:
+Front (Vercel) e API (Railway) sao sites diferentes, entao o cookie de sessao e
+cross-site. Pro Safari/Chrome aceitarem sem precisar de subdominio, o cookie usa
+`SameSite=None; Secure; Partitioned` (CHIPS). O CSRF e por **validacao de Origin**
+(o header `Origin` da request mutante precisa bater com `CORS_ORIGIN`), entao nao ha
+cookie de CSRF legivel pelo front. Config de prod:
 
-- Front em `mirafinance.app`, API em `api.mirafinance.app` (dominio custom no Railway + CNAME)
 - Railway:
-  - `NODE_ENV=production` (sem isso o cookie vira `Lax`/sem `Secure` e quebra)
-  - `CORS_ORIGIN=https://mirafinance.app`
-  - `COOKIE_DOMAIN=.mirafinance.app` (sem isso o front nao le o cookie CSRF e as requests mutantes caem em 403)
-- Vercel: `VITE_API_URL=https://api.mirafinance.app`
+  - `NODE_ENV=production` (sem isso o cookie vira `Lax`/sem `Secure`/sem `Partitioned` e quebra)
+  - `CORS_ORIGIN=https://mirafinance.app` (origem exata do front, sem barra no final)
+- Vercel: `VITE_API_URL=<url-da-api-no-railway>`
