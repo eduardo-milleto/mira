@@ -5,6 +5,8 @@ import { Button } from "../../components/ui/Button";
 import { formatBRL } from "../../lib/format";
 import { ProjectionChart } from "../overview/ProjectionChart";
 import { useInsightsData } from "../overview/insights.api";
+import { ProjectionSettingsCard } from "./ProjectionSettingsCard";
+import { IncomeList } from "./IncomeList";
 
 export function ProjecoesPage() {
   const navigate = useNavigate();
@@ -61,6 +63,17 @@ export function ProjecoesPage() {
           </>
         )}
       </Card>
+
+      <div>
+        <h2 className="text-lg font-medium text-heading">Ajuste sua projeção</h2>
+        <p className="mt-1 text-sm font-light text-muted">
+          Suas fontes de renda e premissas alimentam o cálculo acima — edite e veja a projeção
+          se atualizar.
+        </p>
+      </div>
+
+      <ProjectionSettingsCard />
+      <IncomeList />
     </div>
   );
 }

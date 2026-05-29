@@ -9,8 +9,8 @@ import { buildSpending } from "../gastos/spending";
 import { HeroCard } from "./HeroCard";
 import { ProjectionChart } from "./ProjectionChart";
 import { BreakdownList } from "./BreakdownList";
-import { useInsights } from "./insights.api";
-import { assetBreakdown, featureLinks, monthlyIncome, netWorth } from "./data";
+import { useInsightsData } from "./insights.api";
+import { assetBreakdown, featureLinks, netWorth } from "./data";
 
 function CardHeader({ title, period }: { title: string; period?: string }) {
   return (
@@ -30,17 +30,8 @@ export function OverviewPage() {
   const spendingLoading = expensesQuery.isLoading || cardsQuery.isLoading;
   const spending = buildSpending(expensesQuery.data ?? [], cardsQuery.data ?? []);
 
-  // so calcula insights quando ja temos o gasto real (evita chamada com total 0 no load)
-  const insights = useInsights(
-    {
-      monthlyIncome,
-      monthlyExpenses: spending.total,
-      netWorth,
-      spendingBreakdown: spending.items.map((i) => ({ name: i.name, value: i.value })),
-      assetBreakdown: assetBreakdown.map((a) => ({ name: a.name, value: a.value })),
-    },
-    !!user && !spendingLoading,
-  );
+  // mesma fonte de insights da Sugestoes IA e Projecoes (renda das fontes + premissas + gasto real)
+  const insights = useInsightsData();
 
   const projection = insights.data?.projection ?? [];
   const first = projection[0]?.value;
