@@ -13,9 +13,10 @@ export function CompositionChart() {
             nameKey="name"
             cx="50%"
             cy="50%"
-            innerRadius={62}
-            outerRadius={92}
-            paddingAngle={2}
+            innerRadius={66}
+            outerRadius={96}
+            paddingAngle={2.5}
+            cornerRadius={5}
             stroke="none"
             isAnimationActive={false}
           >
