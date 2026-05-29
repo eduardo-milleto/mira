@@ -122,7 +122,9 @@ export function useDeleteLimit() {
 
 export function useSuggestLimits() {
   return useMutation({
-    mutationFn: () => api.post<{ suggestions: LimitSuggestion[] }>("/personal/limits/suggest"),
+    // body {} de proposito: o backend (Fastify) rejeita POST com content-type json e corpo
+    // vazio antes de chegar na rota; um objeto vazio satisfaz o parser sem exigir dados
+    mutationFn: () => api.post<{ suggestions: LimitSuggestion[] }>("/personal/limits/suggest", {}),
   });
 }
 
