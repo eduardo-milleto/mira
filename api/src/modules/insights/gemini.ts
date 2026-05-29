@@ -81,16 +81,42 @@ export async function generateInsights(
 
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
-      throw new Error(`Gemini respondeu ${res.status}: ${detail.slice(0, 300)}`);
+      throw new Error(`Gemini HTTP ${res.status}: ${detail.slice(0, 800)}`);
     }
 
     const data = (await res.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
+      candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[];
+      promptFeedback?: unknown;
     };
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error("Resposta vazia do Gemini");
 
-    return insightsResponseSchema.parse(JSON.parse(text));
+    // sem texto = conteudo bloqueado ou resposta vazia; loga finishReason + payload cru
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      const reason = data.candidates?.[0]?.finishReason ?? "desconhecido";
+      throw new Error(`Gemini sem conteudo (finishReason=${reason}): ${JSON.stringify(data).slice(0, 800)}`);
+    }
+
+    let json: unknown;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      throw new Error(`Gemini retornou JSON invalido: ${text.slice(0, 800)}`);
+    }
+
+    const result = insightsResponseSchema.safeParse(json);
+    if (!result.success) {
+      throw new Error(
+        `Gemini fora do schema (${JSON.stringify(result.error.issues)}): ${text.slice(0, 800)}`,
+      );
+    }
+
+    return result.data;
+  } catch (err) {
+    // deixa explicito quando foi timeout (o abort vira AbortError generico)
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(`Gemini timeout apos ${TIMEOUT_MS}ms`);
+    }
+    throw err;
   } finally {
     clearTimeout(timer);
   }
