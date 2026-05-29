@@ -6,6 +6,7 @@ import jwt from "@fastify/jwt";
 import { env } from "./env.js";
 import { CSRF_COOKIE, SESSION_COOKIE } from "./lib/cookies.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
+import { insightsRoutes } from "./modules/insights/insights.routes.js";
 
 // rotas que estabelecem sessao nao tem token CSRF ainda, entao ficam de fora da checagem
 const CSRF_EXEMPT = new Set(["/auth/login", "/auth/register"]);
@@ -45,6 +46,7 @@ export async function buildApp() {
   app.get("/health", async () => ({ status: "ok" }));
 
   await app.register(authRoutes, { prefix: "/auth" });
+  await app.register(insightsRoutes, { prefix: "/insights" });
 
   return app;
 }

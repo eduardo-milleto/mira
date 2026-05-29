@@ -3,6 +3,9 @@ import type { LucideIcon } from "lucide-react";
 
 export type BreakdownItem = { name: string; value: number; percent: number };
 
+// total de ganhos do mes (planilha, itens em azul) — usado como entrada do calculo de insights
+export const monthlyIncome = 24870;
+
 // gastos do mes atual (planilha, aba "Mes atual" — itens em vermelho)
 export const monthlySpending = 19456;
 export const spendingBreakdown: BreakdownItem[] = [
@@ -25,29 +28,6 @@ export const assetBreakdown: BreakdownItem[] = [
   { name: "Advogado", value: 50000, percent: 7.9 },
   { name: "Deus", value: 43000, percent: 6.8 },
   { name: "Reserva em Real", value: 500, percent: 0.1 },
-];
-
-// ATENCAO: ainda ilustrativos (sem fonte na planilha) — projecao de 5 anos e score de saude.
-export const projectionData = [
-  { year: "2025", value: 96000 },
-  { year: "2026", value: 110000 },
-  { year: "2027", value: 124000 },
-  { year: "2028", value: 150000 },
-  { year: "2029", value: 178000 },
-];
-
-export type EvolutionStep = {
-  label: string;
-  percent: number;
-  status: string;
-  done?: boolean;
-};
-
-export const evolutionSteps: EvolutionStep[] = [
-  { label: "Hoje", percent: 78, status: "Boa", done: true },
-  { label: "Próximo objetivo", percent: 85, status: "Muito boa" },
-  { label: "Em 6 meses", percent: 90, status: "Excelente" },
-  { label: "Liberdade financeira", percent: 100, status: "Liberdade" },
 ];
 
 export type FeatureLink = {

@@ -6,9 +6,11 @@ import { useSession } from "../auth/auth.api";
 import { HeroCard } from "./HeroCard";
 import { ProjectionChart } from "./ProjectionChart";
 import { BreakdownList } from "./BreakdownList";
+import { useInsights } from "./insights.api";
 import {
   assetBreakdown,
   featureLinks,
+  monthlyIncome,
   monthlySpending,
   netWorth,
   spendingBreakdown,
@@ -27,10 +29,20 @@ function CardHeader({ title, period }: { title: string; period?: string }) {
 
 export function OverviewPage() {
   const { data: user } = useSession();
+  const insights = useInsights(
+    { monthlyIncome, monthlyExpenses: monthlySpending, netWorth },
+    !!user,
+  );
+
+  const projection = insights.data?.projection5y ?? [];
+  const first = projection[0]?.value;
+  const last = projection[projection.length - 1]?.value;
+  const growth = first && last ? Math.round((last / first - 1) * 100) : null;
+  const span = projection.length > 1 ? projection.length - 1 : 0;
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
-      <HeroCard userName={user?.name ?? ""} />
+      <HeroCard userName={user?.name ?? ""} insights={insights.data} loading={insights.isLoading} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6">
@@ -56,17 +68,27 @@ export function OverviewPage() {
 
       <Card className="p-6">
         <CardHeader title="Projeções anuais" period="Anual" />
-        <div className="mt-2 flex items-center gap-3">
-          <p className="tnum text-3xl font-light tracking-tighter text-heading">
-            {formatBRL(136780)}
-          </p>
-          <span className="tnum rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
-            +42% em 5 anos
-          </span>
-        </div>
-        <div className="mt-4">
-          <ProjectionChart />
-        </div>
+        {insights.isLoading ? (
+          <p className="mt-2 text-sm text-muted">Calculando projeção...</p>
+        ) : projection.length ? (
+          <>
+            <div className="mt-2 flex items-center gap-3">
+              <p className="tnum text-3xl font-light tracking-tighter text-heading">
+                {formatBRL(last ?? 0)}
+              </p>
+              {growth !== null && (
+                <span className="tnum rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
+                  +{growth}% em {span} anos
+                </span>
+              )}
+            </div>
+            <div className="mt-4">
+              <ProjectionChart data={projection} />
+            </div>
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-muted">Projeção indisponível no momento.</p>
+        )}
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">

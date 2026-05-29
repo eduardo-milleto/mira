@@ -7,6 +7,8 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().url(),
   PORT: z.coerce.number().default(3333),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  // opcional: sem ela a rota /insights responde 503, mas o resto da api sobe normal
+  GEMINI_API_KEY: z.string().min(1).optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

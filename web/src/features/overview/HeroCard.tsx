@@ -2,13 +2,20 @@ import { ArrowRight, TrendingUp } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { HealthGauge } from "./HealthGauge";
 import { EvolutionTimeline } from "./EvolutionTimeline";
+import type { Insights } from "./insights.api";
 
 // primeiro nome pra saudacao
 function firstName(name: string): string {
   return name.trim().split(" ")[0];
 }
 
-export function HeroCard({ userName }: { userName: string }) {
+type HeroCardProps = {
+  userName: string;
+  insights?: Insights;
+  loading?: boolean;
+};
+
+export function HeroCard({ userName, insights, loading }: HeroCardProps) {
   return (
     <section className="relative overflow-hidden rounded-2xl border border-border">
       {/* video de fundo do hero + overlay escuro pra legibilidade do conteudo */}
@@ -36,18 +43,20 @@ export function HeroCard({ userName }: { userName: string }) {
             Ver recomendações
             <ArrowRight className="h-4 w-4" />
           </Button>
-          <p className="mt-6 flex items-start gap-2 text-sm font-light text-muted">
-            <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
-            Você está no caminho certo. Mantenha o foco e siga evoluindo.
-          </p>
+          {insights?.insight && (
+            <p className="mt-6 flex items-start gap-2 text-sm font-light text-muted">
+              <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+              {insights.insight}
+            </p>
+          )}
         </div>
 
         <div className="flex justify-center">
-          <HealthGauge value={78} label="Boa" delta="8,2% vs mês anterior" />
+          <HealthGauge value={insights?.healthScore} label={insights?.status} loading={loading} />
         </div>
 
         <div className="hidden lg:block">
-          <EvolutionTimeline />
+          <EvolutionTimeline steps={insights?.steps} loading={loading} />
         </div>
       </div>
     </section>

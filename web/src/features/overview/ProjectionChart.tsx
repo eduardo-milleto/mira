@@ -9,15 +9,15 @@ import {
   YAxis,
 } from "recharts";
 import { formatBRLCompact } from "../../lib/format";
-import { projectionData } from "./data";
+import type { ProjectionPoint } from "./insights.api";
 import { ChartTooltip } from "../../components/charts/ChartTooltip";
 
 const axisTick = { fill: "rgba(255,255,255,0.4)", fontSize: 12 };
 
-export function ProjectionChart() {
+export function ProjectionChart({ data }: { data: ProjectionPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <ComposedChart data={projectionData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
+      <ComposedChart data={data} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="bar-fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#4ade80" />
