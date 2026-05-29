@@ -1,12 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
 
+export type IncomeStep = { year: number; monthlyAmount: number };
+
 export type IncomeSource = {
   id: string;
   name: string;
   monthlyAmount: number;
   annualGrowthPct: number;
   startYear: number | null;
+  steps: IncomeStep[];
   createdAt: string;
 };
 
@@ -20,6 +23,7 @@ export type IncomeInput = {
   monthlyAmount: number;
   annualGrowthPct: number;
   startYear: number | null;
+  steps: IncomeStep[];
 };
 
 export type SettingsInput = Partial<ProjectionSettings>;

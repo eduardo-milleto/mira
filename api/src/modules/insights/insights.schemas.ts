@@ -2,12 +2,17 @@ import { z } from "zod";
 
 const breakdownItem = z.object({ name: z.string(), value: z.number() });
 
-// fonte de renda com premissa de futuro: crescimento ao ano e ano de inicio (se futura)
+// fonte de renda com premissa de futuro: crescimento ao ano, ano de inicio (se futura)
+// e valores definidos pra anos especificos (steps), que sobrescrevem o crescimento
 const incomeSource = z.object({
   name: z.string(),
   monthlyAmount: z.number(),
   annualGrowthPct: z.number(),
   startYear: z.number().int().nullable().optional(),
+  steps: z
+    .array(z.object({ year: z.number().int(), monthlyAmount: z.number() }))
+    .optional()
+    .default([]),
 });
 
 // investimento que compoe o patrimonio, com premissa de rendimento por ativo

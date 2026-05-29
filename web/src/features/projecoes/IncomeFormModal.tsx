@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Plus, Trash2 } from "lucide-react";
 import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
 import { TextField } from "../../components/ui/TextField";
@@ -14,9 +15,12 @@ type IncomeFormModalProps = {
   income?: IncomeSource; // presente = edicao
 };
 
-// anos disponiveis pra uma renda futura: do proximo ano ate +20
+// anos disponiveis pra rendas futuras / valores futuros: do proximo ano ate +30
 const CURRENT_YEAR = new Date().getFullYear();
-const FUTURE_YEARS = Array.from({ length: 20 }, (_, i) => String(CURRENT_YEAR + 1 + i));
+const FUTURE_YEARS = Array.from({ length: 30 }, (_, i) => String(CURRENT_YEAR + 1 + i));
+
+// linha de "valor futuro": ano (texto, pro combobox) + valor mensal
+type StepRow = { year: string; monthlyAmount: number };
 
 export function IncomeFormModal({ isOpen, onOpenChange, income }: IncomeFormModalProps) {
   const [name, setName] = useState("");
@@ -24,6 +28,7 @@ export function IncomeFormModal({ isOpen, onOpenChange, income }: IncomeFormModa
   const [annualGrowthPct, setAnnualGrowthPct] = useState(0);
   const [isFuture, setIsFuture] = useState(false);
   const [startYear, setStartYear] = useState("");
+  const [steps, setSteps] = useState<StepRow[]>([]);
   const create = useCreateIncome();
   const update = useUpdateIncome();
   const pending = create.isPending || update.isPending;
@@ -38,15 +43,36 @@ export function IncomeFormModal({ isOpen, onOpenChange, income }: IncomeFormModa
       const future = income?.startYear != null && income.startYear > CURRENT_YEAR;
       setIsFuture(future);
       setStartYear(future ? String(income?.startYear) : "");
+      setSteps((income?.steps ?? []).map((s) => ({ year: String(s.year), monthlyAmount: s.monthlyAmount })));
       create.reset();
       update.reset();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, income]);
 
+  function addStep() {
+    setSteps((prev) => [...prev, { year: "", monthlyAmount: 0 }]);
+  }
+  function updateStep(idx: number, patch: Partial<StepRow>) {
+    setSteps((prev) => prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
+  }
+  function removeStep(idx: number) {
+    setSteps((prev) => prev.filter((_, i) => i !== idx));
+  }
+
   const yearNum = Number.parseInt(startYear, 10);
   const yearValid = !isFuture || (Number.isInteger(yearNum) && yearNum > CURRENT_YEAR);
-  const valid = name.trim().length > 0 && monthlyAmount > 0 && yearValid;
+
+  // cada valor futuro precisa de ano valido (futuro) + valor > 0, e anos nao podem repetir
+  const stepRows = steps.map((s) => ({ ...s, yearNum: Number.parseInt(s.year, 10) }));
+  const stepsFilled = stepRows.every(
+    (s) => Number.isInteger(s.yearNum) && s.yearNum > CURRENT_YEAR && s.monthlyAmount > 0,
+  );
+  const stepYears = stepRows.map((s) => s.yearNum);
+  const noDupYears = new Set(stepYears).size === stepYears.length;
+  const stepsValid = stepsFilled && noDupYears;
+
+  const valid = name.trim().length > 0 && monthlyAmount > 0 && yearValid && stepsValid;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -56,6 +82,7 @@ export function IncomeFormModal({ isOpen, onOpenChange, income }: IncomeFormModa
       monthlyAmount,
       annualGrowthPct,
       startYear: isFuture ? yearNum : null,
+      steps: stepRows.map((s) => ({ year: s.yearNum, monthlyAmount: s.monthlyAmount })),
     };
     const onSuccess = () => onOpenChange(false);
     if (income) {
@@ -75,9 +102,10 @@ export function IncomeFormModal({ isOpen, onOpenChange, income }: IncomeFormModa
         <TextField label="Nome" placeholder="Ex: Salário" value={name} onChange={setName} autoFocus />
         <MoneyInput label="Valor mensal" value={monthlyAmount} onChange={setMonthlyAmount} />
         <PercentInput
-          label="Crescimento esperado ao ano"
+          label="Crescimento esperado ao ano (opcional)"
           value={annualGrowthPct}
           onChange={setAnnualGrowthPct}
+          placeholder="Ex: 8,5"
         />
 
         <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface-2/50 p-4">
@@ -93,6 +121,58 @@ export function IncomeFormModal({ isOpen, onOpenChange, income }: IncomeFormModa
               placeholder="Ano de início"
             />
           )}
+        </div>
+
+        {/* valores futuros por ano: sobrescrevem o crescimento percentual naquele ano */}
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface-2/50 p-4">
+          <div>
+            <p className="text-sm text-heading">Valores futuros por ano (opcional)</p>
+            <p className="text-xs text-faint">
+              Defina quanto essa renda passa a valer em anos específicos — sobrescreve o crescimento
+              naquele ano.
+            </p>
+          </div>
+
+          {steps.length > 0 && (
+            <div className="flex max-h-64 flex-col gap-3 overflow-y-auto pr-1">
+              {steps.map((step, idx) => (
+                <div key={idx} className="rounded-lg border border-border bg-surface/60 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted">Valor {idx + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeStep(idx)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-faint transition hover:bg-white/5 hover:text-negative"
+                      aria-label="Remover valor futuro"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                    <ComboboxField
+                      label="Ano"
+                      options={FUTURE_YEARS}
+                      value={step.year}
+                      onChange={(year) => updateStep(idx, { year })}
+                      placeholder="Ano"
+                    />
+                    <MoneyInput
+                      label="Novo valor mensal"
+                      value={step.monthlyAmount}
+                      onChange={(monthlyAmount) => updateStep(idx, { monthlyAmount })}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!noDupYears && <p className="text-xs text-negative">Há anos repetidos nos valores futuros.</p>}
+
+          <Button variant="outline" onPress={addStep} className="self-start px-3 py-2 text-sm">
+            <Plus className="h-4 w-4" />
+            Adicionar ano
+          </Button>
         </div>
 
         {error && <p className="text-sm text-negative">{error.message}</p>}
