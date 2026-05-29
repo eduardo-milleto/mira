@@ -13,6 +13,8 @@ import { DashboardLayout } from "./components/layout/DashboardLayout";
 import { OverviewPage } from "./features/overview/OverviewPage";
 import { GanhosPage } from "./features/ganhos/GanhosPage";
 import { GastosPage } from "./features/gastos/GastosPage";
+import { ProjecoesPage } from "./features/projecoes/ProjecoesPage";
+import { InsightsPage } from "./features/insights/InsightsPage";
 
 type RouterContext = { queryClient: QueryClient };
 
@@ -70,10 +72,28 @@ const gastosRoute = createRoute({
   component: GastosPage,
 });
 
+const projecoesRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/projecoes",
+  component: ProjecoesPage,
+});
+
+const insightsRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/sugestoes",
+  component: InsightsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
-  appLayoutRoute.addChildren([overviewRoute, ganhosRoute, gastosRoute]),
+  appLayoutRoute.addChildren([
+    overviewRoute,
+    ganhosRoute,
+    gastosRoute,
+    projecoesRoute,
+    insightsRoute,
+  ]),
 ]);
 
 export const router = createRouter({

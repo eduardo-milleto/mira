@@ -2,13 +2,25 @@ import { z } from "zod";
 
 const breakdownItem = z.object({ name: z.string(), value: z.number() });
 
+// fonte de renda com premissa de futuro: crescimento ao ano e ano de inicio (se futura)
+const incomeSource = z.object({
+  name: z.string(),
+  monthlyAmount: z.number(),
+  annualGrowthPct: z.number(),
+  startYear: z.number().int().nullable().optional(),
+});
+
 // entrada: numeros do mes + quebras por categoria (pra recomendacao ser especifica)
+// + premissas de projecao (fontes de renda, taxa de rendimento, horizonte)
 export const insightsRequestSchema = z.object({
   monthlyIncome: z.number().nonnegative(),
   monthlyExpenses: z.number().nonnegative(),
   netWorth: z.number(),
   spendingBreakdown: z.array(breakdownItem).optional().default([]),
   assetBreakdown: z.array(breakdownItem).optional().default([]),
+  incomeSources: z.array(incomeSource).optional().default([]),
+  returnRatePct: z.number().optional(),
+  horizonYears: z.number().int().min(1).max(30).optional().default(5),
 });
 
 // saida esperada do Gemini (validada de forma defensiva antes de devolver)
@@ -25,7 +37,7 @@ export const insightsResponseSchema = z.object({
       }),
     )
     .min(1),
-  projection5y: z
+  projection: z
     .array(z.object({ year: z.string().min(1), value: z.number() }))
     .min(1),
   projectionExplanation: z.string().min(1),

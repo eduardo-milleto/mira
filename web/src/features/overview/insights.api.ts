@@ -14,7 +14,7 @@ export type Insights = {
   status: string;
   insight: string;
   steps: EvolutionStep[];
-  projection5y: ProjectionPoint[];
+  projection: ProjectionPoint[];
   projectionExplanation: string;
   recommendations: Recommendation[];
 };
@@ -39,4 +39,25 @@ export function useInsights(input: InsightsInput, enabled = true) {
     staleTime: 1000 * 60 * 60,
     retry: 1,
   });
+}
+
+// monta o input dos insights a partir do gasto real (banco) + renda/patrimonio.
+// usado na Visao geral, Sugestoes IA e Projecoes — mesmo input = mesmo cache.
+export function useInsightsData() {
+  const { data: user } = useSession();
+  const expensesQuery = useExpenses(!!user);
+  const cardsQuery = useCreditCards(!!user);
+  const spendingLoading = expensesQuery.isLoading || cardsQuery.isLoading;
+  const spending = buildSpending(expensesQuery.data ?? [], cardsQuery.data ?? []);
+
+  const input: InsightsInput = {
+    monthlyIncome,
+    monthlyExpenses: spending.total,
+    netWorth,
+    spendingBreakdown: spending.items.map((i) => ({ name: i.name, value: i.value })),
+    assetBreakdown: assetBreakdown.map((a) => ({ name: a.name, value: a.value })),
+  };
+
+  // so dispara quando o gasto real ja carregou (evita chamada com total 0 no load)
+  return useInsights(input, !!user && !spendingLoading);
 }

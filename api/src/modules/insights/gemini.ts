@@ -23,7 +23,7 @@ const responseSchema = {
         propertyOrdering: ["label", "percent", "status"],
       },
     },
-    projection5y: {
+    projection: {
       type: "ARRAY",
       items: {
         type: "OBJECT",
@@ -53,7 +53,7 @@ const responseSchema = {
     "status",
     "insight",
     "steps",
-    "projection5y",
+    "projection",
     "projectionExplanation",
     "recommendations",
   ],
@@ -64,7 +64,32 @@ function formatBreakdown(items: { name: string; value: number }[]): string {
   return items.map((i) => `- ${i.name}: R$ ${i.value}`).join("\n");
 }
 
+// descreve cada fonte de renda com sua premissa de crescimento e, se futura, o ano de inicio
+function formatIncomes(
+  items: { name: string; monthlyAmount: number; annualGrowthPct: number; startYear?: number | null }[],
+  currentYear: number,
+): string {
+  if (!items.length) return "(nao informado)";
+  return items
+    .map((i) => {
+      const growth = `cresce ${i.annualGrowthPct}% ao ano`;
+      const when =
+        i.startYear && i.startYear > currentYear
+          ? `, comeca em ${i.startYear} (renda futura)`
+          : "";
+      return `- ${i.name}: R$ ${i.monthlyAmount}/mes (${growth})${when}`;
+    })
+    .join("\n");
+}
+
 function buildPrompt(input: InsightsRequest, currentYear: number): string {
+  const horizon = input.horizonYears;
+  const endYear = currentYear + horizon - 1;
+  const returnRate =
+    input.returnRatePct !== undefined
+      ? `${input.returnRatePct}% ao ano`
+      : "uma taxa de mercado realista que voce assumir";
+
   return [
     "Voce e um consultor financeiro. Analise os dados mensais de um usuario brasileiro e responda em portugues do Brasil, de forma pratica e realista. NUNCA de conselhos genericos.",
     "",
@@ -78,14 +103,21 @@ function buildPrompt(input: InsightsRequest, currentYear: number): string {
     "Patrimonio por categoria:",
     formatBreakdown(input.assetBreakdown),
     "",
+    "Fontes de renda (com premissa de crescimento e rendas futuras):",
+    formatIncomes(input.incomeSources, currentYear),
+    "",
+    "Premissas da projecao:",
+    `- Horizonte: ${horizon} anos (de ${currentYear} a ${endYear}).`,
+    `- Taxa de rendimento da sobra investida: ${returnRate}.`,
+    "",
     "Calcule:",
     "1. healthScore (0 a 100): considere a taxa de poupanca ((renda - gastos) / renda), a relacao gastos/renda e o folego do patrimonio (patrimonio dividido pelos gastos mensais, em meses). Mais sobra e mais folego = score maior.",
     "2. status: rotulo curto (ex: 'Critica', 'Atencao', 'Boa', 'Muito boa', 'Excelente').",
     "3. insight: uma unica frase curta de recomendacao pratica.",
     "4. steps: exatamente 4 marcos de evolucao [{label, percent, status}]. O primeiro deve ser 'Hoje' com percent = healthScore; os outros 3 sao metas crescentes ate 'Liberdade financeira' com percent 100.",
-    `5. projection5y: patrimonio projetado para os proximos 5 anos [{year, value}], comecando em ${currentYear}, assumindo que a sobra mensal (renda - gastos) e investida e rende ao longo do tempo.`,
-    "6. projectionExplanation: explique em detalhe (2 a 4 frases) como essa projecao foi calculada — as premissas (sobra mensal investida, taxa de rendimento assumida), o que mais influencia o resultado e o que o usuario pode fazer pra melhorar a curva.",
-    "7. recommendations: de 3 a 5 recomendacoes praticas e ESPECIFICAS, citando as categorias reais de gasto/patrimonio listadas acima (ex: renegociar/cortar uma categoria especifica de gasto, realocar um ativo concreto). Cada uma com: title (curto), description (acao concreta e o porque, com numeros quando possivel), priority ('alta', 'media' ou 'baixa'). Nada generico.",
+    `5. projection: patrimonio projetado para ${horizon} anos [{year, value}], um ponto por ano de ${currentYear} a ${endYear}. Faca cada fonte de renda crescer pelo seu percentual ao ano, some as rendas futuras a partir do ano de inicio delas, e invista a sobra mensal (renda - gastos) rendendo a ${returnRate}.`,
+    "6. projectionExplanation: explique em detalhe (2 a 4 frases) como essa projecao foi calculada — as premissas (crescimento de cada renda, rendas futuras, sobra mensal investida, taxa de rendimento), o que mais influencia o resultado e o que o usuario pode fazer pra melhorar a curva.",
+    "7. recommendations: de 3 a 5 recomendacoes praticas e ESPECIFICAS, citando as categorias reais de gasto/patrimonio/renda listadas acima (ex: renegociar/cortar uma categoria especifica de gasto, acelerar uma renda futura, realocar um ativo concreto). Cada uma com: title (curto), description (acao concreta e o porque, com numeros quando possivel), priority ('alta', 'media' ou 'baixa'). Nada generico.",
   ].join("\n");
 }
 

@@ -42,7 +42,7 @@ export function OverviewPage() {
     !!user && !spendingLoading,
   );
 
-  const projection = insights.data?.projection5y ?? [];
+  const projection = insights.data?.projection ?? [];
   const first = projection[0]?.value;
   const last = projection[projection.length - 1]?.value;
   const growth = first && last ? Math.round((last / first - 1) * 100) : null;
