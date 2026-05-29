@@ -1,6 +1,6 @@
 import { insightsResponseSchema, type InsightsRequest, type InsightsResponse } from "./insights.schemas.js";
 
-const MODEL = "gemini-2.0-flash";
+const MODEL = "gemini-2.5-flash";
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 const TIMEOUT_MS = 20000;
 
