@@ -21,3 +21,22 @@ export function buildPatrimony(investments: Investment[]): { total: number; item
 
   return { total, items };
 }
+
+// variacao mensal ESPERADA (estimativa) do grupo de ativos, a partir da taxa anual de cada
+// um: taxa mensal = (1 + r/100)^(1/12) - 1, com r = expectedReturnPct (0 quando ausente).
+// devolve a media ponderada pelo valor, em pontos percentuais (ex: 0.8 = +0,8%/mes).
+// nao reflete aportes nem variacao real — e so a projecao de rendimento das premissas.
+export function expectedMonthlyVariationPct(investments: Investment[]): number {
+  const total = investments.reduce((sum, inv) => sum + inv.value, 0);
+  if (total <= 0) return 0;
+
+  const weighted = investments.reduce((sum, inv) => {
+    const annual = (inv.expectedReturnPct ?? 0) / 100;
+    const base = 1 + annual;
+    // base <= 0 (queda esperada >= 100%/ano) seria NaN no expoente fracionario; trava em -100%
+    const monthly = base > 0 ? Math.pow(base, 1 / 12) - 1 : -1;
+    return sum + monthly * inv.value;
+  }, 0);
+
+  return (weighted / total) * 100;
+}

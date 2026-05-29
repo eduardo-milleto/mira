@@ -1,17 +1,21 @@
+import { useState } from "react";
 import { Info } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Card } from "../../components/ui/Card";
+import { MonthSelect } from "../../components/ui/MonthSelect";
 import { FeatureCard } from "../../components/FeatureCard";
-import { formatBRL } from "../../lib/format";
+import { formatBRL, formatPct } from "../../lib/format";
 import { cn } from "../../lib/cn";
+import { currentMonthKey, monthLabel } from "../../lib/month";
 import { useSession } from "../auth/auth.api";
 import { useCreditCards, useExpenses } from "../gastos/gastos.api";
 import { buildSpending } from "../gastos/spending";
 import { useIncomes } from "../projecoes/projecoes.api";
 import { buildEarnings } from "../ganhos/earnings";
 import { investmentKindOf, useInvestments } from "../investimentos/investimentos.api";
-import { buildPatrimony } from "../investimentos/patrimony";
+import { buildPatrimony, expectedMonthlyVariationPct } from "../investimentos/patrimony";
 import { usePersonalSummary } from "../gastos-pessoais/personal.api";
+import { useExtrasSummary } from "../extras/extras.api";
 import { HeroCard } from "./HeroCard";
 import { ProjectionChart } from "./ProjectionChart";
 import { BreakdownList } from "./BreakdownList";
@@ -29,21 +33,41 @@ function CardHeader({ title, period }: { title: string; period?: string }) {
   );
 }
 
-// uma das duas partes do patrimonio (Investimentos / Patrimonio) com subtotal + breakdown
+// uma das duas partes do patrimonio (Investimentos / Patrimonio) com subtotal + breakdown.
+// expectedPct = variacao mensal ESPERADA (estimativa) pela taxa de rendimento dos ativos.
 function PatrimonySection({
   label,
   total,
   items,
+  expectedPct,
 }: {
   label: string;
   total: number;
   items: { name: string; value: number; percent: number }[];
+  expectedPct?: number;
 }) {
+  // so mostra a badge quando ha taxa relevante (arredonda pra >= 0,1%); evita "+0,0%/mês"
+  const showPct = expectedPct != null && Math.abs(expectedPct) >= 0.05;
+  const up = (expectedPct ?? 0) >= 0;
   return (
     <div>
       <div className="flex items-baseline justify-between gap-4">
         <span className="text-xs uppercase tracking-wide text-faint">{label}</span>
-        <span className="tnum text-sm text-muted">{formatBRL(total)}</span>
+        <span className="flex items-baseline gap-2">
+          {showPct && (
+            <span
+              title="Variação mensal esperada pela taxa de rendimento de cada ativo"
+              className={cn(
+                "tnum rounded-full px-2 py-0.5 text-xs",
+                up ? "bg-brand-soft text-brand" : "bg-negative/10 text-negative",
+              )}
+            >
+              ≈ {up ? "+" : "−"}
+              {formatPct(Math.abs(expectedPct!))}/mês
+            </span>
+          )}
+          <span className="tnum text-sm text-muted">{formatBRL(total)}</span>
+        </span>
       </div>
       <div className="mt-3">
         <BreakdownList items={items} />
@@ -54,30 +78,43 @@ function PatrimonySection({
 
 export function OverviewPage() {
   const { data: user } = useSession();
+  // mes selecionado no filtro (padrao = mes atual); recalcula ganhos e gastos do mes
+  const [month, setMonth] = useState(currentMonthKey());
+  const monthYear = Number(month.slice(0, 4));
+
   const expensesQuery = useExpenses(!!user);
   const cardsQuery = useCreditCards(!!user);
-  const personalQuery = usePersonalSummary(!!user);
-  const spendingLoading = expensesQuery.isLoading || cardsQuery.isLoading || personalQuery.isLoading;
+  const personalQuery = usePersonalSummary(month, !!user);
+  const extrasQuery = useExtrasSummary(month, !!user);
+  const spendingLoading =
+    expensesQuery.isLoading || cardsQuery.isLoading || personalQuery.isLoading || extrasQuery.isLoading;
+  // gasto do mes = fixos + cartoes + gastos pessoais do mes + gastos extras do mes
   const spending = buildSpending(
     expensesQuery.data ?? [],
     cardsQuery.data ?? [],
     personalQuery.data?.monthTotal ?? 0,
+    extrasQuery.data?.gastoTotal ?? 0,
   );
 
-  // ganhos do mes (mesma fonte da pagina de Ganhos) pra fechar o resultado do mes
+  // ganhos do mes = renda recorrente ativa no ano + ganhos extras do mes
   const incomesQuery = useIncomes(!!user);
-  const currentYear = new Date().getFullYear();
-  const earnings = buildEarnings(incomesQuery.data ?? [], currentYear);
+  const earnings = buildEarnings(incomesQuery.data ?? [], monthYear);
+  const ganhosTotal = earnings.total + (extrasQuery.data?.ganhoTotal ?? 0);
   const monthLoading = spendingLoading || incomesQuery.isLoading;
-  const resultado = earnings.total - spending.total; // o que sobra: ganhos - gastos
+  const resultado = ganhosTotal - spending.total; // o que sobra: ganhos - gastos
   const topExpenses = spending.items.slice(0, 3); // ja vem ordenado do maior pro menor
 
   const investmentsQuery = useInvestments(!!user);
   const allAssets = investmentsQuery.data ?? [];
   const patrimony = buildPatrimony(allAssets); // total geral (patrimonio + investimentos)
   // duas seccoes: investimentos (kind ausente conta aqui) e patrimonio (bens)
-  const investSection = buildPatrimony(allAssets.filter((i) => investmentKindOf(i) === "investimento"));
-  const bensSection = buildPatrimony(allAssets.filter((i) => investmentKindOf(i) === "patrimonio"));
+  const investAssets = allAssets.filter((i) => investmentKindOf(i) === "investimento");
+  const bensAssets = allAssets.filter((i) => investmentKindOf(i) === "patrimonio");
+  const investSection = buildPatrimony(investAssets);
+  const bensSection = buildPatrimony(bensAssets);
+  // variacao mensal esperada (estimativa) pela taxa de rendimento esperada de cada ativo
+  const investExpectedPct = expectedMonthlyVariationPct(investAssets);
+  const bensExpectedPct = expectedMonthlyVariationPct(bensAssets);
 
   // mesma fonte de insights da Sugestoes IA e Projecoes (renda das fontes + premissas + gasto real)
   const insights = useInsightsData();
@@ -92,9 +129,14 @@ export function OverviewPage() {
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
       <HeroCard userName={user?.name ?? ""} insights={insights.data} loading={insights.isLoading} />
 
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted">Resumo do mês selecionado</p>
+        <MonthSelect value={month} onChange={setMonth} />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6">
-          <CardHeader title="Resultado do mês" period="Este mês" />
+          <CardHeader title="Resultado do mês" period={monthLabel(month)} />
           {monthLoading ? (
             <p className="mt-2 text-sm text-muted">Carregando...</p>
           ) : (
@@ -113,8 +155,8 @@ export function OverviewPage() {
                 <div className="flex items-baseline justify-between gap-3 text-sm">
                   <span className="text-heading">Ganhos</span>
                   <span className="flex items-baseline gap-2">
-                    <span className="tnum text-heading">{formatBRL(earnings.total)}</span>
-                    {earnings.total === 0 && (
+                    <span className="tnum text-heading">{formatBRL(ganhosTotal)}</span>
+                    {ganhosTotal === 0 && (
                       <Link to="/ganhos" className="text-brand transition hover:text-brand-dark">
                         adicionar
                       </Link>
@@ -176,6 +218,7 @@ export function OverviewPage() {
                     label="Investimentos"
                     total={investSection.total}
                     items={investSection.items}
+                    expectedPct={investExpectedPct}
                   />
                 )}
                 {bensSection.items.length > 0 && (
@@ -183,6 +226,7 @@ export function OverviewPage() {
                     label="Patrimônio"
                     total={bensSection.total}
                     items={bensSection.items}
+                    expectedPct={bensExpectedPct}
                   />
                 )}
               </div>

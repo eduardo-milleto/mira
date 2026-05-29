@@ -10,6 +10,7 @@ import { gastosRoutes } from "./modules/gastos/gastos.routes.js";
 import { projecoesRoutes } from "./modules/projecoes/projecoes.routes.js";
 import { investimentosRoutes } from "./modules/investimentos/investimentos.routes.js";
 import { personalRoutes } from "./modules/personal/personal.routes.js";
+import { extrasRoutes } from "./modules/extras/extras.routes.js";
 
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -41,6 +42,7 @@ export async function buildApp() {
   await app.register(projecoesRoutes, { prefix: "/projecoes" });
   await app.register(investimentosRoutes, { prefix: "/investimentos" });
   await app.register(personalRoutes, { prefix: "/personal" });
+  await app.register(extrasRoutes, { prefix: "/extras" });
 
   return app;
 }

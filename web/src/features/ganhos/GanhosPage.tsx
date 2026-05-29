@@ -3,6 +3,8 @@ import { Card } from "../../components/ui/Card";
 import { FeatureCard } from "../../components/FeatureCard";
 import { useSession } from "../auth/auth.api";
 import { useIncomes } from "../projecoes/projecoes.api";
+import { useExtrasSummary } from "../extras/extras.api";
+import { currentMonthKey } from "../../lib/month";
 import { buildEarnings } from "./earnings";
 import { EarningsHero } from "./EarningsHero";
 import { CompositionChart } from "./CompositionChart";
@@ -35,9 +37,13 @@ export function GanhosPage() {
   const earnings = buildEarnings(incomes ?? [], currentYear);
   const hasIncome = earnings.slices.length > 0;
 
+  // ganhos extras do mes corrente entram no total do hero (renda recorrente + extras)
+  const { data: extras } = useExtrasSummary(currentMonthKey(), !!user);
+  const ganhosTotal = earnings.total + (extras?.ganhoTotal ?? 0);
+
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
-      <EarningsHero total={earnings.total} />
+      <EarningsHero total={ganhosTotal} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6">

@@ -56,10 +56,12 @@ export function usePersonalExpenses(enabled = true) {
   });
 }
 
-export function usePersonalSummary(enabled = true) {
+// ?month=YYYY-MM filtra um mes especifico; sem month usa o mes corrente. o mes entra na
+// queryKey pra cada mes ter cache proprio (Visao geral seleciona; insights usa o atual).
+export function usePersonalSummary(month?: string, enabled = true) {
   return useQuery({
-    queryKey: personalSummaryKey,
-    queryFn: () => api.get<MonthSummary>("/personal/summary"),
+    queryKey: [...personalSummaryKey, month ?? "current"],
+    queryFn: () => api.get<MonthSummary>(`/personal/summary${month ? `?month=${month}` : ""}`),
     enabled,
   });
 }
