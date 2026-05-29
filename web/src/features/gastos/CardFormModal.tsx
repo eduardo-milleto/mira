@@ -39,10 +39,10 @@ export function CardFormModal({ isOpen, onOpenChange, card }: CardFormModalProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, card]);
 
+  // precisa do apelido, do valor e de pelo menos um entre banco/bandeira
   const valid =
     name.trim().length > 0 &&
-    bank.trim().length > 0 &&
-    brand.trim().length > 0 &&
+    (bank.trim().length > 0 || brand.trim().length > 0) &&
     avgMonthlySpend > 0;
 
   function handleSubmit(event: FormEvent) {
@@ -50,8 +50,8 @@ export function CardFormModal({ isOpen, onOpenChange, card }: CardFormModalProps
     if (!valid || pending) return;
     const input = {
       name: name.trim(),
-      bank: bank.trim(),
-      brand: brand.trim(),
+      bank: bank.trim() || null,
+      brand: brand.trim() || null,
       avgMonthlySpend,
       includeInMonthly,
     };
@@ -73,20 +73,23 @@ export function CardFormModal({ isOpen, onOpenChange, card }: CardFormModalProps
           onChange={setName}
           autoFocus
         />
-        <ComboboxField
-          label="Banco"
-          options={BANKS}
-          value={bank}
-          onChange={setBank}
-          placeholder="Escolha ou digite o banco"
-        />
-        <ComboboxField
-          label="Bandeira"
-          options={CARD_BRANDS}
-          value={brand}
-          onChange={setBrand}
-          placeholder="Escolha ou digite a bandeira"
-        />
+        <div className="flex flex-col gap-2">
+          <ComboboxField
+            label="Banco"
+            options={BANKS}
+            value={bank}
+            onChange={setBank}
+            placeholder="Escolha ou digite o banco"
+          />
+          <ComboboxField
+            label="Bandeira"
+            options={CARD_BRANDS}
+            value={brand}
+            onChange={setBrand}
+            placeholder="Escolha ou digite a bandeira"
+          />
+          <p className="text-xs text-faint">Informe pelo menos um: banco ou bandeira.</p>
+        </div>
         <MoneyInput label="Gasto medio mensal" value={avgMonthlySpend} onChange={setAvgMonthlySpend} />
 
         <div className="rounded-xl border border-border bg-surface-2 px-4 py-3">

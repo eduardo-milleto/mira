@@ -100,8 +100,8 @@ export async function gastosRoutes(app: FastifyInstance) {
       data: {
         userId: request.user.sub,
         name: parsed.data.name,
-        bank: parsed.data.bank,
-        brand: parsed.data.brand,
+        bank: parsed.data.bank ?? null,
+        brand: parsed.data.brand ?? null,
         avgMonthlySpend: parsed.data.avgMonthlySpend,
         includeInMonthly: parsed.data.includeInMonthly,
       },

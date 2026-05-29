@@ -43,8 +43,8 @@ model CreditCard {
   id               String   @id @default(uuid())
   userId           String
   name             String // apelido (ex: "Nubank Roxinho")
-  bank             String // banco emissor escolhido (Nubank, Inter, etc)
-  brand            String? // bandeira do cartao (Visa, Mastercard, Elo...); null em cartoes antigos
+  bank             String? // banco emissor (Nubank, Inter...); opcional se a bandeira for informada
+  brand            String? // bandeira do cartao (Visa, Mastercard, Elo...); opcional se o banco for informado
   avgMonthlySpend  Decimal  @db.Decimal(12, 2)
   includeInMonthly Boolean  @default(false)
   createdAt        DateTime @default(now())
