@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import type { CofreMovement, MonthClose } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import { authenticate } from "../../plugins/auth.js";
-import { monthRange } from "../../lib/month.js";
+import { computeSurplus, round2 } from "../../lib/surplus.js";
 import {
   monthCloseSchema,
   movementCreateSchema,
@@ -25,11 +25,6 @@ function lastDayOf(month: string): Date {
   const y = Number(month.slice(0, 4));
   const m = Number(month.slice(5, 7));
   return new Date(Date.UTC(y, m, 0));
-}
-
-// arredonda pra 2 casas pra cortar ruido de ponto flutuante na soma de valores
-function round2(n: number): number {
-  return Math.round(n * 100) / 100;
 }
 
 // meses COMPLETOS de startMonth (inclusive) ate o mes atual (exclusivo), em ordem crescente.
