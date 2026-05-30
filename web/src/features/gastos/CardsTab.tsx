@@ -67,13 +67,13 @@ export function CardsTab() {
             return (
             <Card key={card.id} className="flex flex-col gap-4 p-5">
               <div className="flex items-start gap-3">
-                {BankLogo ? (
-                  <BankLogo className="h-10 w-10 shrink-0 rounded-xl" />
-                ) : (
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface-2">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface-2">
+                  {BankLogo ? (
+                    <BankLogo className="h-6 w-6 rounded-md" />
+                  ) : (
                     <CreditCardIcon className="h-5 w-5 text-muted" />
-                  </span>
-                )}
+                  )}
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-heading">{card.name}</p>
                   <p className="truncate text-xs text-faint">
