@@ -24,6 +24,7 @@ model User {
   categoryLimits     CategoryLimit[]
   spendingProfile    SpendingProfile?
   advisorMessages    AdvisorMessage[]
+  assistantMessages  AssistantMessage[]
   extras             Extra[]
   cofreMovements     CofreMovement[]
   monthCloses        MonthClose[]
@@ -192,6 +193,21 @@ model AdvisorMessage {
 
   @@index([userId, createdAt])
   @@map("advisor_messages")
+}
+
+// historico do chat com o assistente global (a Mira). uma linha por mensagem, user ou
+// assistant. proposital ficar separado do advisor de compra (advisor_messages): sao dois
+// chats distintos, com personas e objetivos diferentes (busca ampla de dados x decisao de compra).
+model AssistantMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  role      String // "user" | "assistant"
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("assistant_messages")
 }
 
 // movimento pontual de um mes (nao recorrente): ganho extra (bonus, freela, venda)
