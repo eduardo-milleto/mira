@@ -12,6 +12,7 @@ import amexLogo from "../../assets/banks/amex.png";
 import eloLogo from "../../assets/banks/elo.png";
 import hipercardLogo from "../../assets/banks/hipercard.png";
 import santanderLogo from "../../assets/banks/santander.png";
+import bancoDoBrasilLogo from "../../assets/banks/banco-do-brasil.png";
 
 type BankLogoProps = { className?: string };
 type BankLogo = (props: BankLogoProps) => JSX.Element;
@@ -40,6 +41,8 @@ const BANK_LOGOS: Record<string, BankLogo> = {
   bradesco: makeLogo(bradescoLogo, "Bradesco"),
   "mercado pago": makeLogo(mercadoPagoLogo, "Mercado Pago", "contain"),
   santander: makeLogo(santanderLogo, "Santander", "contain"),
+  "banco do brasil": makeLogo(bancoDoBrasilLogo, "Banco do Brasil"),
+  bb: makeLogo(bancoDoBrasilLogo, "Banco do Brasil"),
 };
 
 // logos de bandeira (campo brand): so usados quando o banco nao tem logo proprio.
