@@ -39,6 +39,20 @@ export function useExpenses(enabled = true) {
   });
 }
 
+// classificacao por IA dos gastos em areas amplas (Moradia, Transporte...). recebe os
+// nomes (unicos e JA ordenados pela pagina, pra estabilidade do cache) e devolve { nome -> area }.
+export function useExpenseAreas(names: string[], enabled = true) {
+  return useQuery({
+    queryKey: ["expense-areas", names],
+    queryFn: () =>
+      api
+        .post<{ areas: Record<string, string> }>("/gastos/expense-areas", { names })
+        .then((r) => r.areas),
+    enabled: enabled && names.length > 0,
+    staleTime: 1000 * 60 * 60,
+  });
+}
+
 export function useCreateExpense() {
   const qc = useQueryClient();
   return useMutation({
