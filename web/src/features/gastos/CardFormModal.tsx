@@ -7,7 +7,15 @@ import { ComboboxField } from "../../components/ui/Combobox";
 import { Switch } from "../../components/ui/Switch";
 import { BANKS } from "./banks";
 import { CARD_BRANDS } from "./brands";
+import { getBankLogo } from "./bankLogos";
 import { useCreateCard, useUpdateCard, type CreditCard } from "./gastos.api";
+
+// logo do banco/bandeira ao lado do nome no dropdown. passamos o nome como banco
+// E bandeira pois o getBankLogo procura nos dois mapas.
+function renderLogo(name: string) {
+  const Logo = getBankLogo(name, name);
+  return Logo ? <Logo className="h-5 w-5 rounded-[5px] border border-border" /> : null;
+}
 
 type CardFormModalProps = {
   isOpen: boolean;
@@ -80,6 +88,7 @@ export function CardFormModal({ isOpen, onOpenChange, card }: CardFormModalProps
             value={bank}
             onChange={setBank}
             placeholder="Escolha ou digite o banco"
+            renderIcon={renderLogo}
           />
           <ComboboxField
             label="Bandeira"
@@ -87,6 +96,7 @@ export function CardFormModal({ isOpen, onOpenChange, card }: CardFormModalProps
             value={brand}
             onChange={setBrand}
             placeholder="Escolha ou digite a bandeira"
+            renderIcon={renderLogo}
           />
           <p className="text-xs text-faint">Informe pelo menos um: banco ou bandeira.</p>
         </div>

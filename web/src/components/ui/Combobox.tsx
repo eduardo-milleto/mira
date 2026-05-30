@@ -6,6 +6,7 @@ import {
   ListBoxItem,
   Popover,
 } from "react-aria-components";
+import type { ReactNode } from "react";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "../../lib/cn";
 
@@ -15,6 +16,8 @@ type ComboboxFieldProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  // icone opcional ao lado de cada opcao (ex: logo do banco/bandeira)
+  renderIcon?: (name: string) => ReactNode;
 };
 
 // combobox searchable (padrao do projeto): input inline + busca + dropdown filtrado.
@@ -25,6 +28,7 @@ export function ComboboxField({
   value,
   onChange,
   placeholder,
+  renderIcon,
 }: ComboboxFieldProps) {
   // com inputValue controlado o react-aria nao filtra sozinho — filtramos na mao
   const query = value.trim().toLowerCase();
@@ -70,8 +74,15 @@ export function ComboboxField({
             >
               {({ isSelected }) => (
                 <>
-                  {item.name}
-                  {isSelected && <Check className="h-4 w-4 text-brand" />}
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    {renderIcon && (
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                        {renderIcon(item.name)}
+                      </span>
+                    )}
+                    <span className="truncate">{item.name}</span>
+                  </span>
+                  {isSelected && <Check className="h-4 w-4 shrink-0 text-brand" />}
                 </>
               )}
             </ListBoxItem>

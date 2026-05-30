@@ -8,8 +8,8 @@ import { useSession } from "../auth/auth.api";
 import { useExtrasSummary } from "../extras/extras.api";
 import { usePersonalSummary } from "../gastos-pessoais/personal.api";
 import { CompositionChart } from "../ganhos/CompositionChart";
-import { useCreditCards, useExpenses } from "./gastos.api";
-import { buildSpendingDashboard } from "./spending";
+import { useCreditCards, useExpenses, useExpenseAreas } from "./gastos.api";
+import { buildSpendingDashboard, buildAreaBreakdown } from "./spending";
 import { SpendingHero } from "./SpendingHero";
 import { SpendingSplit } from "./SpendingSplit";
 import { TopSpending } from "./TopSpending";
@@ -52,6 +52,13 @@ export function GastosPage() {
   );
   const hasSpending = spending.slices.length > 0;
 
+  // gastos por area: classifica os nomes dos gastos mensais via IA e agrupa por area.
+  // nomes unicos e ordenados pra nao refazer a chamada quando a ordem muda (cache estavel).
+  const expenseNames = [...new Set((expenses ?? []).map((e) => e.name))].sort();
+  const { data: areaMap, isLoading: loadingAreas } = useExpenseAreas(expenseNames, !!user);
+  const areaBreakdown = buildAreaBreakdown(expenses ?? [], areaMap ?? {});
+  const hasAreas = areaBreakdown.slices.length > 0;
+
   return (
     <Tabs className="mx-auto flex max-w-7xl flex-col gap-6">
       <TabList
@@ -89,16 +96,31 @@ export function GastosPage() {
           </Card>
 
           <Card className="p-6">
-            <CardHeader title="Fixos vs variáveis" period="Este mês" />
+            <CardHeader title="Gastos por área" period="Este mês" />
             <div className="mt-6">
-              {isLoading ? (
+              {isLoading || loadingAreas ? (
                 <p className="text-sm text-muted">Carregando...</p>
+              ) : hasAreas ? (
+                <CompositionChart slices={areaBreakdown.slices} total={areaBreakdown.total} />
               ) : (
-                <SpendingSplit fixed={spending.fixedColumn} variable={spending.variableColumn} />
+                <p className="text-sm text-muted">
+                  Cadastre seus gastos fixos para ver os gastos por área.
+                </p>
               )}
             </div>
           </Card>
         </div>
+
+        <Card className="p-6">
+          <CardHeader title="Fixos vs variáveis" period="Este mês" />
+          <div className="mt-6">
+            {isLoading ? (
+              <p className="text-sm text-muted">Carregando...</p>
+            ) : (
+              <SpendingSplit fixed={spending.fixedColumn} variable={spending.variableColumn} />
+            )}
+          </div>
+        </Card>
 
         {hasSpending && (
           <Card className="p-6">

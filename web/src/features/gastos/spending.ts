@@ -65,3 +65,26 @@ export function buildSpendingDashboard(
     variableColumn: { value: variable, percent: total > 0 ? (variable / total) * 100 : 0 },
   };
 }
+
+// monta a rosca "gastos por area": agrupa SO os gastos mensais nomeados (Expense) pela
+// area que a IA classificou (mapa nome -> area), soma por area e adiciona % + cor por fatia.
+// nomes ainda sem classificacao (mapa carregando ou desconhecido) caem em "Outros".
+export function buildAreaBreakdown(
+  expenses: Expense[],
+  areas: Record<string, string>,
+): { total: number; slices: SpendingSlice[] } {
+  const byArea = new Map<string, number>();
+  for (const e of expenses) {
+    const area = areas[e.name] ?? "Outros";
+    byArea.set(area, (byArea.get(area) ?? 0) + e.amount);
+  }
+  const total = [...byArea.values()].reduce((sum, value) => sum + value, 0);
+
+  const slices: SpendingSlice[] = [...byArea.entries()]
+    .map(([name, value]) => ({ name, value, percent: total > 0 ? (value / total) * 100 : 0 }))
+    .filter((item) => item.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .map((item, idx) => ({ ...item, color: PALETTE[idx % PALETTE.length] }));
+
+  return { total, slices };
+}
