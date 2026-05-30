@@ -1,6 +1,7 @@
 import { BarChart3, Home, Info, Sparkles } from "lucide-react";
 import { Tab, TabList, TabPanel, Tabs } from "react-aria-components";
 import { Card } from "../../components/ui/Card";
+import { pageTabClass, pageTabList } from "../../components/ui/pageTabs";
 import { FeatureCard } from "../../components/FeatureCard";
 import { currentMonthKey } from "../../lib/month";
 import { useSession } from "../auth/auth.api";
@@ -32,11 +33,6 @@ const featureLinks = [
   { icon: Sparkles, title: "Sugestões IA", desc: "Receba recomendações para gastar melhor." },
 ];
 
-const tabBase =
-  "cursor-pointer rounded-lg px-4 py-2 text-sm outline-none transition data-[focus-visible]:ring-2 data-[focus-visible]:ring-brand/40";
-const tabInactive = "text-muted data-[hovered]:text-heading";
-const tabSelected = "bg-surface-2 text-heading shadow-card";
-
 export function GastosPage() {
   const { data: user } = useSession();
   const month = currentMonthKey();
@@ -57,79 +53,88 @@ export function GastosPage() {
   const hasSpending = spending.slices.length > 0;
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-6">
-      <SpendingHero total={spending.total} />
+    <Tabs className="mx-auto flex max-w-7xl flex-col gap-6">
+      <TabList
+        aria-label="Seções de gastos"
+        className={pageTabList}
+      >
+        <Tab id="dashboard" className={pageTabClass}>
+          Dashboard
+        </Tab>
+        <Tab id="gastos" className={pageTabClass}>
+          Gastos fixos
+        </Tab>
+        <Tab id="cartoes" className={pageTabClass}>
+          Cartões de crédito
+        </Tab>
+      </TabList>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="p-6">
-          <CardHeader title="Composição dos gastos" period="Este mês" />
-          <div className="mt-6">
-            {isLoading ? (
-              <p className="text-sm text-muted">Carregando...</p>
-            ) : hasSpending ? (
-              <CompositionChart slices={spending.slices} total={spending.total} />
-            ) : (
-              <p className="text-sm text-muted">
-                Cadastre seus gastos abaixo para ver a composição dos seus gastos do mês.
-              </p>
-            )}
-          </div>
-        </Card>
+      <TabPanel id="dashboard" className="flex flex-col gap-6 outline-none">
+        <SpendingHero total={spending.total} />
 
-        <Card className="p-6">
-          <CardHeader title="Fixos vs variáveis" period="Este mês" />
-          <div className="mt-6">
-            {isLoading ? (
-              <p className="text-sm text-muted">Carregando...</p>
-            ) : (
-              <SpendingSplit fixed={spending.fixedColumn} variable={spending.variableColumn} />
-            )}
-          </div>
-        </Card>
-      </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="p-6">
+            <CardHeader title="Composição dos gastos" period="Este mês" />
+            <div className="mt-6">
+              {isLoading ? (
+                <p className="text-sm text-muted">Carregando...</p>
+              ) : hasSpending ? (
+                <CompositionChart slices={spending.slices} total={spending.total} />
+              ) : (
+                <p className="text-sm text-muted">
+                  Cadastre seus gastos para ver a composição dos seus gastos do mês.
+                </p>
+              )}
+            </div>
+          </Card>
 
-      {hasSpending && (
-        <Card className="p-6">
-          <CardHeader title="Principais gastos este mês" />
-          <div className="mt-5">
-            <TopSpending items={spending.slices} />
-          </div>
-        </Card>
-      )}
+          <Card className="p-6">
+            <CardHeader title="Fixos vs variáveis" period="Este mês" />
+            <div className="mt-6">
+              {isLoading ? (
+                <p className="text-sm text-muted">Carregando...</p>
+              ) : (
+                <SpendingSplit fixed={spending.fixedColumn} variable={spending.variableColumn} />
+              )}
+            </div>
+          </Card>
+        </div>
 
-      <div>
-        <h2 className="text-lg font-medium text-heading">Gerenciar gastos e cartões</h2>
-        <p className="mt-1 text-sm font-light text-muted">
-          Adicione, edite ou remova seus gastos fixos e cartões — eles alimentam seu gasto mensal.
-        </p>
-      </div>
+        {hasSpending && (
+          <Card className="p-6">
+            <CardHeader title="Principais gastos este mês" />
+            <div className="mt-5">
+              <TopSpending items={spending.slices} />
+            </div>
+          </Card>
+        )}
 
-      <Tabs>
-        <TabList
-          aria-label="Seções de gastos"
-          className="inline-flex gap-1 rounded-xl border border-border bg-surface/60 p-1"
-        >
-          <Tab id="gastos" className={({ isSelected }) => `${tabBase} ${isSelected ? tabSelected : tabInactive}`}>
-            Gastos fixos
-          </Tab>
-          <Tab id="cartoes" className={({ isSelected }) => `${tabBase} ${isSelected ? tabSelected : tabInactive}`}>
-            Cartões de crédito
-          </Tab>
-        </TabList>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {featureLinks.map((f) => (
+            <FeatureCard key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
+          ))}
+        </div>
+      </TabPanel>
 
-        <TabPanel id="gastos" className="mt-6 outline-none">
-          <ExpensesTab />
-        </TabPanel>
-        <TabPanel id="cartoes" className="mt-6 outline-none">
-          <CardsTab />
-        </TabPanel>
-      </Tabs>
+      <TabPanel id="gastos" className="flex flex-col gap-6 outline-none">
+        <div>
+          <h2 className="text-lg font-medium text-heading">Gerenciar gastos fixos</h2>
+          <p className="mt-1 text-sm font-light text-muted">
+            Adicione, edite ou remova seus gastos fixos, eles alimentam seu gasto mensal.
+          </p>
+        </div>
+        <ExpensesTab />
+      </TabPanel>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {featureLinks.map((f) => (
-          <FeatureCard key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
-        ))}
-      </div>
-    </div>
+      <TabPanel id="cartoes" className="flex flex-col gap-6 outline-none">
+        <div>
+          <h2 className="text-lg font-medium text-heading">Gerenciar cartões de crédito</h2>
+          <p className="mt-1 text-sm font-light text-muted">
+            Adicione, edite ou remova seus cartões, eles alimentam seu gasto mensal.
+          </p>
+        </div>
+        <CardsTab />
+      </TabPanel>
+    </Tabs>
   );
 }

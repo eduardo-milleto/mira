@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { BarChart3, Info, PieChart, Sparkles } from "lucide-react";
+import { Tab, TabList, TabPanel, Tabs } from "react-aria-components";
 import { Card } from "../../components/ui/Card";
+import { pageTabClass, pageTabList } from "../../components/ui/pageTabs";
 import { FeatureCard } from "../../components/FeatureCard";
 import { useSession } from "../auth/auth.api";
 import { useIncomes } from "../projecoes/projecoes.api";
@@ -46,66 +48,79 @@ export function GanhosPage() {
   const ganhosTotal = earnings.total + (extras?.ganhoTotal ?? 0);
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-6">
-      <EarningsHero total={ganhosTotal} />
+    <Tabs className="mx-auto flex max-w-7xl flex-col gap-6">
+      <TabList aria-label="Seções de ganhos" className={pageTabList}>
+        <Tab id="dashboard" className={pageTabClass}>
+          Dashboard
+        </Tab>
+        <Tab id="fontes" className={pageTabClass}>
+          Fontes de renda
+        </Tab>
+      </TabList>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="p-6">
-          <CardHeader title="Composição dos ganhos" period="Este mês" />
-          <div className="mt-6">
-            {isLoading ? (
-              <p className="text-sm text-muted">Carregando...</p>
-            ) : hasIncome ? (
-              <CompositionChart slices={earnings.slices} total={earnings.total} />
-            ) : (
-              <p className="text-sm text-muted">
-                Cadastre suas fontes de renda abaixo para ver a composição dos seus ganhos.
-              </p>
-            )}
-          </div>
-        </Card>
+      <TabPanel id="dashboard" className="flex flex-col gap-6 outline-none">
+        <EarningsHero total={ganhosTotal} />
 
-        <Card className="p-6">
-          <CardHeader title="Renda ativa vs futura" />
-          <div className="mt-6">
-            {isLoading ? (
-              <p className="text-sm text-muted">Carregando...</p>
-            ) : (
-              <ActiveVsFuture
-                active={earnings.activeValue}
-                future={earnings.futureValue}
-                futureYear={futureYear}
-                minYear={minFutureYear}
-                maxYear={maxFutureYear}
-                onYearChange={(y) => setFutureYear(Math.min(maxFutureYear, Math.max(minFutureYear, y)))}
-              />
-            )}
-          </div>
-        </Card>
-      </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="p-6">
+            <CardHeader title="Composição dos ganhos" period="Este mês" />
+            <div className="mt-6">
+              {isLoading ? (
+                <p className="text-sm text-muted">Carregando...</p>
+              ) : hasIncome ? (
+                <CompositionChart slices={earnings.slices} total={earnings.total} />
+              ) : (
+                <p className="text-sm text-muted">
+                  Cadastre suas fontes de renda para ver a composição dos seus ganhos.
+                </p>
+              )}
+            </div>
+          </Card>
 
-      {hasIncome && (
-        <Card className="p-6">
-          <CardHeader title="Principais fontes este mês" />
-          <div className="mt-5">
-            <TopSources sources={earnings.slices} />
-          </div>
-        </Card>
-      )}
+          <Card className="p-6">
+            <CardHeader title="Renda ativa vs futura" />
+            <div className="mt-6">
+              {isLoading ? (
+                <p className="text-sm text-muted">Carregando...</p>
+              ) : (
+                <ActiveVsFuture
+                  active={earnings.activeValue}
+                  future={earnings.futureValue}
+                  futureYear={futureYear}
+                  minYear={minFutureYear}
+                  maxYear={maxFutureYear}
+                  onYearChange={(y) => setFutureYear(Math.min(maxFutureYear, Math.max(minFutureYear, y)))}
+                />
+              )}
+            </div>
+          </Card>
+        </div>
 
-      <div>
-        <h2 className="text-lg font-medium text-heading">Gerenciar fontes de renda</h2>
-        <p className="mt-1 text-sm font-light text-muted">
-          Adicione, edite ou remova suas rendas — elas alimentam seus ganhos e a projeção da Mira.
-        </p>
-      </div>
-      <EarningsList />
+        {hasIncome && (
+          <Card className="p-6">
+            <CardHeader title="Principais fontes este mês" />
+            <div className="mt-5">
+              <TopSources sources={earnings.slices} />
+            </div>
+          </Card>
+        )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {featureLinks.map((f) => (
-          <FeatureCard key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
-        ))}
-      </div>
-    </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {featureLinks.map((f) => (
+            <FeatureCard key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
+          ))}
+        </div>
+      </TabPanel>
+
+      <TabPanel id="fontes" className="flex flex-col gap-6 outline-none">
+        <div>
+          <h2 className="text-lg font-medium text-heading">Gerenciar fontes de renda</h2>
+          <p className="mt-1 text-sm font-light text-muted">
+            Adicione, edite ou remova suas rendas, elas alimentam seus ganhos e a projeção da Mira.
+          </p>
+        </div>
+        <EarningsList />
+      </TabPanel>
+    </Tabs>
   );
 }

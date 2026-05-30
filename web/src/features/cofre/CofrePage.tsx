@@ -7,6 +7,7 @@ import { cn } from "../../lib/cn";
 import { formatBRL } from "../../lib/format";
 import { monthLabel } from "../../lib/month";
 import { CofreMovementModal } from "./CofreMovementModal";
+import { CofreBalanceHero } from "./CofreBalanceHero";
 import { useCofre, useDeleteMovement, type CofreMovement } from "./cofre.api";
 
 // rotulo amigavel da origem do movimento
@@ -61,21 +62,7 @@ export function CofrePage() {
         </p>
       </div>
 
-      <Card className="p-6">
-        <p className="text-sm text-muted">Saldo do cofre</p>
-        <p
-          className={cn(
-            "tnum mt-2 text-4xl font-light tracking-tighter",
-            balance < 0 ? "text-negative" : "text-heading",
-          )}
-        >
-          {balance < 0 ? "−" : ""}
-          {formatBRL(Math.abs(balance))}
-        </p>
-        {balance < 0 && (
-          <p className="mt-2 text-xs text-negative">Você gastou além do que tinha guardado.</p>
-        )}
-      </Card>
+      <CofreBalanceHero balance={balance} isLoading={isLoading} />
 
       <div className="flex flex-col gap-5">
         <div className="flex items-center justify-between gap-4">
