@@ -5,6 +5,7 @@ import type { JSX } from "react";
 import interLogo from "../../assets/banks/inter.png";
 import itauLogo from "../../assets/banks/itau.png";
 import banrisulLogo from "../../assets/banks/banrisul.png";
+import nubankLogo from "../../assets/banks/nubank.png";
 
 type BankLogoProps = { className?: string };
 type BankLogo = (props: BankLogoProps) => JSX.Element;
@@ -21,6 +22,10 @@ function BanrisulLogo({ className }: BankLogoProps) {
   return <img src={banrisulLogo} alt="Banrisul" className={className} />;
 }
 
+function NubankLogo({ className }: BankLogoProps) {
+  return <img src={nubankLogo} alt="Nubank" className={className} />;
+}
+
 // chave normalizada (minuscula, sem espacos nas pontas) -> logo do banco.
 // inclui variacoes com/sem acento pois o banco vem de texto livre.
 const BANK_LOGOS: Record<string, BankLogo> = {
@@ -28,6 +33,8 @@ const BANK_LOGOS: Record<string, BankLogo> = {
   itau: ItauLogo,
   "itaú": ItauLogo,
   banrisul: BanrisulLogo,
+  nubank: NubankLogo,
+  nu: NubankLogo,
 };
 
 export function getBankLogo(bank: string | null | undefined): BankLogo | null {
