@@ -15,6 +15,8 @@ import santanderLogo from "../../assets/banks/santander.png";
 import bancoDoBrasilLogo from "../../assets/banks/banco-do-brasil.png";
 import c6Logo from "../../assets/banks/c6.png";
 import btgLogo from "../../assets/banks/btg.png";
+import xpLogo from "../../assets/banks/xp.png";
+import picpayLogo from "../../assets/banks/picpay.png";
 
 type BankLogoProps = { className?: string };
 type BankLogo = (props: BankLogoProps) => JSX.Element;
@@ -49,6 +51,8 @@ const BANK_LOGOS: Record<string, BankLogo> = {
   c6: makeLogo(c6Logo, "C6 Bank", "contain"),
   "btg pactual": makeLogo(btgLogo, "BTG Pactual"),
   btg: makeLogo(btgLogo, "BTG Pactual"),
+  xp: makeLogo(xpLogo, "XP", "contain"),
+  picpay: makeLogo(picpayLogo, "PicPay", "contain"),
 };
 
 // logos de bandeira (campo brand): so usados quando o banco nao tem logo proprio.
