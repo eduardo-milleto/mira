@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { Switch } from "../../components/ui/Switch";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { formatBRL } from "../../lib/format";
+import { getBankLogo } from "./bankLogos";
 import { CardFormModal } from "./CardFormModal";
 import {
   useCreditCards,
@@ -61,12 +62,18 @@ export function CardsTab() {
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {cards.map((card) => (
+          {cards.map((card) => {
+            const BankLogo = getBankLogo(card.bank);
+            return (
             <Card key={card.id} className="flex flex-col gap-4 p-5">
               <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface-2">
-                  <CreditCardIcon className="h-5 w-5 text-muted" />
-                </span>
+                {BankLogo ? (
+                  <BankLogo className="h-10 w-10 shrink-0 rounded-xl" />
+                ) : (
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface-2">
+                    <CreditCardIcon className="h-5 w-5 text-muted" />
+                  </span>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-heading">{card.name}</p>
                   <p className="truncate text-xs text-faint">
@@ -109,7 +116,8 @@ export function CardsTab() {
                 </Switch>
               </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 
