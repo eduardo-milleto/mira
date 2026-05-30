@@ -9,6 +9,8 @@ import nubankLogo from "../../assets/banks/nubank.png";
 import bradescoLogo from "../../assets/banks/bradesco.png";
 import mercadoPagoLogo from "../../assets/banks/mercado-pago.png";
 import amexLogo from "../../assets/banks/amex.png";
+import eloLogo from "../../assets/banks/elo.png";
+import hipercardLogo from "../../assets/banks/hipercard.png";
 
 type BankLogoProps = { className?: string };
 type BankLogo = (props: BankLogoProps) => JSX.Element;
@@ -44,6 +46,8 @@ const amex = makeLogo(amexLogo, "American Express");
 const BRAND_LOGOS: Record<string, BankLogo> = {
   "american express": amex,
   amex,
+  elo: makeLogo(eloLogo, "Elo"),
+  hipercard: makeLogo(hipercardLogo, "Hipercard"),
 };
 
 function lookup(value: string | null | undefined, map: Record<string, BankLogo>): BankLogo | null {
