@@ -63,7 +63,7 @@ export function CardsTab() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {cards.map((card) => {
-            const BankLogo = getBankLogo(card.bank);
+            const BankLogo = getBankLogo(card.bank, card.brand);
             return (
             <Card key={card.id} className="flex flex-col gap-4 p-5">
               <div className="flex items-start gap-3">

@@ -8,6 +8,7 @@ import banrisulLogo from "../../assets/banks/banrisul.png";
 import nubankLogo from "../../assets/banks/nubank.png";
 import bradescoLogo from "../../assets/banks/bradesco.png";
 import mercadoPagoLogo from "../../assets/banks/mercado-pago.png";
+import amexLogo from "../../assets/banks/amex.png";
 
 type BankLogoProps = { className?: string };
 type BankLogo = (props: BankLogoProps) => JSX.Element;
@@ -37,7 +38,23 @@ const BANK_LOGOS: Record<string, BankLogo> = {
   "mercado pago": makeLogo(mercadoPagoLogo, "Mercado Pago", "contain"),
 };
 
-export function getBankLogo(bank: string | null | undefined): BankLogo | null {
-  if (!bank) return null;
-  return BANK_LOGOS[bank.trim().toLowerCase()] ?? null;
+// logos de bandeira (campo brand): so usados quando o banco nao tem logo proprio.
+// Amex e bandeira, entao so aparece pro cartao American Express de fato.
+const amex = makeLogo(amexLogo, "American Express");
+const BRAND_LOGOS: Record<string, BankLogo> = {
+  "american express": amex,
+  amex,
+};
+
+function lookup(value: string | null | undefined, map: Record<string, BankLogo>): BankLogo | null {
+  if (!value) return null;
+  return map[value.trim().toLowerCase()] ?? null;
+}
+
+// o banco manda; so cai pra bandeira quando o banco nao tem logo registrado.
+export function getBankLogo(
+  bank: string | null | undefined,
+  brand?: string | null,
+): BankLogo | null {
+  return lookup(bank, BANK_LOGOS) ?? lookup(brand, BRAND_LOGOS);
 }
