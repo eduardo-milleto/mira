@@ -1,6 +1,6 @@
 // estilos do seletor de abas no topo das paginas (Dashboard / gerenciamento)
 export const pageTabList =
-  "inline-flex gap-1 rounded-xl border border-border bg-surface/60 p-1";
+  "inline-flex self-start gap-1 rounded-xl border border-border bg-surface/60 p-1";
 
 export const pageTabBase =
   "cursor-pointer rounded-lg px-4 py-2 text-sm outline-none transition data-[focus-visible]:ring-2 data-[focus-visible]:ring-brand/40";
