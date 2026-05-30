@@ -12,6 +12,8 @@ import { investimentosRoutes } from "./modules/investimentos/investimentos.route
 import { personalRoutes } from "./modules/personal/personal.routes.js";
 import { extrasRoutes } from "./modules/extras/extras.routes.js";
 import { cofreRoutes } from "./modules/cofre/cofre.routes.js";
+import { saldoBancoRoutes } from "./modules/saldo-banco/saldo-banco.routes.js";
+import { assistantRoutes } from "./modules/assistant/assistant.routes.js";
 
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -45,6 +47,8 @@ export async function buildApp() {
   await app.register(personalRoutes, { prefix: "/personal" });
   await app.register(extrasRoutes, { prefix: "/extras" });
   await app.register(cofreRoutes, { prefix: "/cofre" });
+  await app.register(saldoBancoRoutes, { prefix: "/saldo-banco" });
+  await app.register(assistantRoutes, { prefix: "/assistant" });
 
   return app;
 }

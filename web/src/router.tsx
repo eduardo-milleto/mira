@@ -19,6 +19,7 @@ import { InsightsPage } from "./features/insights/InsightsPage";
 import { InvestimentosPage } from "./features/investimentos/InvestimentosPage";
 import { PatrimonioPage } from "./features/patrimonio/PatrimonioPage";
 import { CofrePage } from "./features/cofre/CofrePage";
+import { SaldoBancoPage } from "./features/saldo-banco/SaldoBancoPage";
 
 type RouterContext = { queryClient: QueryClient };
 
@@ -112,6 +113,12 @@ const cofreRoute = createRoute({
   component: CofrePage,
 });
 
+const saldoBancoRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/saldo-banco",
+  component: SaldoBancoPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
@@ -125,6 +132,7 @@ const routeTree = rootRoute.addChildren([
     investimentosRoute,
     patrimonioRoute,
     cofreRoute,
+    saldoBancoRoute,
   ]),
 ]);
 

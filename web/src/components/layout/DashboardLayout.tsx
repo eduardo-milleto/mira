@@ -10,6 +10,7 @@ import {
   ArrowDownUp,
   BarChart3,
   Bell,
+  Building2,
   CalendarDays,
   ChevronsUpDown,
   Home,
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { icon: Target, label: "Investimentos", to: "/investimentos" },
   { icon: Landmark, label: "Patrimônio", to: "/patrimonio" },
   { icon: Vault, label: "Cofre", to: "/cofre" },
+  { icon: Building2, label: "Saldo no banco", to: "/saldo-banco" },
 ];
 
 const navBase = "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm outline-none transition";
