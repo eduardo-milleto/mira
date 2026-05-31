@@ -8,8 +8,7 @@ import {
   settingsSchema,
 } from "./projecoes.schemas.js";
 
-// defaults das premissas pra quem ainda nao salvou nada (sem criar linha no banco)
-const DEFAULT_RETURN_RATE = 10;
+// default da premissa pra quem ainda nao salvou nada (sem criar linha no banco)
 const DEFAULT_HORIZON = 5;
 
 // traz a fonte de renda sempre com seus valores futuros (ordenados por ano)
@@ -29,7 +28,7 @@ function publicIncome(i: IncomeSource & { steps: IncomeStep[] }) {
 }
 
 function publicSettings(s: ProjectionSettings) {
-  return { returnRatePct: s.returnRatePct.toNumber(), horizonYears: s.horizonYears };
+  return { horizonYears: s.horizonYears };
 }
 
 export async function projecoesRoutes(app: FastifyInstance) {
@@ -113,11 +112,9 @@ export async function projecoesRoutes(app: FastifyInstance) {
     const settings = await prisma.projectionSettings.findUnique({
       where: { userId: request.user.sub },
     });
-    // sem linha ainda = devolve os defaults sem persistir
+    // sem linha ainda = devolve o default sem persistir
     if (!settings) {
-      return reply.send({
-        settings: { returnRatePct: DEFAULT_RETURN_RATE, horizonYears: DEFAULT_HORIZON },
-      });
+      return reply.send({ settings: { horizonYears: DEFAULT_HORIZON } });
     }
     return reply.send({ settings: publicSettings(settings) });
   });
@@ -132,7 +129,6 @@ export async function projecoesRoutes(app: FastifyInstance) {
       where: { userId: request.user.sub },
       create: {
         userId: request.user.sub,
-        returnRatePct: parsed.data.returnRatePct ?? DEFAULT_RETURN_RATE,
         horizonYears: parsed.data.horizonYears ?? DEFAULT_HORIZON,
       },
       update: parsed.data,

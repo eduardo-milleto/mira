@@ -220,7 +220,7 @@ async function panorama(userId: string, now: Date) {
       comecaEm: i.startYear,
     })),
     gatilhosDoUsuario: ctx.triggers,
-    projecao: { horizonteAnos: ctx.horizonYears, rendimentoSobraPct: ctx.returnRatePct },
+    projecao: { horizonteAnos: ctx.horizonYears },
   };
 }
 

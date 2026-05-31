@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Info } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Card } from "../../components/ui/Card";
@@ -6,8 +6,7 @@ import { Button } from "../../components/ui/Button";
 import { ComboboxField } from "../../components/ui/Combobox";
 import { formatBRL } from "../../lib/format";
 import { StackedProjectionChart } from "./StackedProjectionChart";
-import { projectInvestments } from "./projection";
-import { investmentKindOf, useInvestments } from "./investimentos.api";
+import { useInvestmentProjection } from "./useInvestmentProjection";
 import { useProjectionSettings, useUpdateProjectionSettings } from "../projecoes/projecoes.api";
 
 // horizontes comuns; allowsCustomValue do combobox deixa digitar outro valor
@@ -15,8 +14,6 @@ const HORIZON_OPTIONS = ["3", "5", "10", "15", "20"];
 
 export function PatrimonyProjectionCard() {
   const navigate = useNavigate();
-  // projeta so os investimentos (kind="investimento"), de fora os bens de patrimonio
-  const { data: investments, isLoading, isError } = useInvestments();
   const { data: settings } = useProjectionSettings();
   const updateSettings = useUpdateProjectionSettings();
 
@@ -40,25 +37,14 @@ export function PatrimonyProjectionCard() {
     }
   }
 
-  // horizonte efetivo: o valor digitado quando valido, senao a premissa salva (fallback 5 anos)
+  // projeta so os investimentos (kind="investimento"), de fora os bens de patrimonio.
+  // o valor digitado no combobox entra na hora como override antes de o settings persistir
   const parsedHorizon = Number.parseInt(horizon, 10);
-  const horizonYears =
-    Number.isInteger(parsedHorizon) && parsedHorizon >= 1 && parsedHorizon <= 30
-      ? parsedHorizon
-      : (settings?.horizonYears ?? 5);
-
-  const { rows, assets } = useMemo(() => {
-    const invItems = (investments ?? []).filter((i) => investmentKindOf(i) === "investimento");
-    const now = new Date();
-    // getMonth() e 0-based; +1 deixa janeiro=1 ... dezembro=12 pro calculo ate o fim do ano
-    return projectInvestments(invItems, horizonYears, now.getFullYear(), now.getMonth() + 1);
-  }, [investments, horizonYears]);
-
-  const hasData = rows.length > 0 && assets.length > 0;
-  const first = rows[0]?.total;
-  const last = rows[rows.length - 1]?.total;
-  const growth = first && last ? Math.round((last / first - 1) * 100) : null;
-  const span = rows.length > 1 ? rows.length - 1 : 0;
+  const horizonOverride = Number.isInteger(parsedHorizon) ? parsedHorizon : undefined;
+  const { rows, assets, hasData, last, growth, span, isLoading, isError } = useInvestmentProjection(
+    "investimento",
+    horizonOverride,
+  );
 
   return (
     <Card className="p-6">

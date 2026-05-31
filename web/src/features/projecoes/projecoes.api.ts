@@ -14,7 +14,6 @@ export type IncomeSource = {
 };
 
 export type ProjectionSettings = {
-  returnRatePct: number;
   horizonYears: number;
 };
 

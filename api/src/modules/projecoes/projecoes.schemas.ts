@@ -46,13 +46,10 @@ export const incomeUpdateSchema = z
   .refine((d) => Object.keys(d).length > 0, "Nada para atualizar");
 
 // --- premissas globais da projecao ---
-export const settingsSchema = z
-  .object({
-    returnRatePct: z.number().min(0, "Taxa invalida").max(100, "Taxa muito alta"),
-    horizonYears: z.number().int().min(1, "Minimo 1 ano").max(30, "Maximo 30 anos"),
-  })
-  .partial()
-  .refine((d) => Object.keys(d).length > 0, "Nada para atualizar");
+// so o horizonte: a taxa de rendimento agora e por ativo (definida em cada investimento)
+export const settingsSchema = z.object({
+  horizonYears: z.number().int().min(1, "Minimo 1 ano").max(30, "Maximo 30 anos"),
+});
 
 export type IncomeCreateInput = z.infer<typeof incomeCreateSchema>;
 export type IncomeUpdateInput = z.infer<typeof incomeUpdateSchema>;
