@@ -27,6 +27,7 @@ import { useLogout, useSession } from "../../features/auth/auth.api";
 import { useCofre } from "../../features/cofre/cofre.api";
 import { CofreMonthCloseModal } from "../../features/cofre/CofreMonthCloseModal";
 import { HeaderCoinPill } from "../../features/cofre/HeaderCoinPill";
+import { AssistantWidget } from "../../features/assistant/AssistantWidget";
 
 type NavItem = { icon: LucideIcon; label: string; to?: string; exact?: boolean };
 
@@ -142,6 +143,9 @@ export function DashboardLayout() {
       {cofre && cofre.pendingMonths.length > 0 && (
         <CofreMonthCloseModal pendingMonths={cofre.pendingMonths} />
       )}
+
+      {/* assistente flutuante (canto inferior direito), presente em todas as paginas autenticadas */}
+      {user && <AssistantWidget />}
     </div>
   );
 }

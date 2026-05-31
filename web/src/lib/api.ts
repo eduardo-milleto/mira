@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+// base da API. exportada porque o chat do assistente consome via SSE com fetch direto
+// (o wrapper `api` faz res.json(), que nao serve pra stream)
+export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
 export class ApiError extends Error {
   status: number;

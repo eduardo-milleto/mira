@@ -14,6 +14,7 @@ export type ChatTurn = { role: "user" | "assistant"; content: string };
 export type AssistantEvent =
   | { type: "token"; text: string } // pedaco de texto da resposta final
   | { type: "tool"; name: string } // a IA comecou a consultar uma ferramenta
+  | { type: "verdict"; value: "pode" | "cuidado" | "evite" } // parecer da avaliacao de compra
   | { type: "reset" }; // descarta o texto parcial ja exibido (era so preambulo antes de uma tool)
 
 // estrutura minima de um part vindo do Gemini
@@ -29,7 +30,7 @@ const PERSONA = [
   "Se a busca nao retornar nada, diga honestamente que nao encontrou aquilo nos dados — nao chute.",
   "Quando o usuario perguntar se pode ou deve comprar/gastar algo, use a ferramenta avaliar_compra e de um veredito claro (pode / cuidado / evite) explicando com os numeros reais.",
   "Seja proativa: alem de responder, aponte gaps ou padroes relevantes que o usuario provavelmente nao notaria so olhando a tela (ex: uma categoria que disparou, uma cobranca repetida, dinheiro parado no cofre sem render).",
-  "Responda sempre em portugues do Brasil, num tom direto, humano e honesto. Use R$ e numeros claros. Nao narre que vai usar ferramentas nem descreva seus passos — apenas traga a resposta depois de ter os dados.",
+  "Responda sempre em portugues do Brasil, num tom direto, humano e honesto, em texto simples sem markdown. Use R$ e numeros claros. Nao narre que vai usar ferramentas nem descreva seus passos, apenas traga a resposta depois de ter os dados.",
 ].join(" ");
 
 // "YYYY-MM-DD" de uma data em UTC, pra ancorar a IA no dia/mes atual
@@ -153,7 +154,7 @@ export async function runAssistant(
         return turnText;
       }
 
-      // rodada com ferramentas: qualquer texto exibido foi preambulo — manda limpar no front
+      // rodada com ferramentas: qualquer texto exibido foi preambulo, manda limpar no front
       if (streamedText) onEvent({ type: "reset" });
 
       // ecoa o turno do modelo (com os functionCall na ordem recebida) e roda cada ferramenta
@@ -168,6 +169,14 @@ export async function runAssistant(
       for (const call of calls) {
         onEvent({ type: "tool", name: call.name });
         const result = await executeTool(userId, call.name, call.args, now);
+        // o parecer de compra (pode/cuidado/evite) vira um evento proprio pro front mostrar o
+        // selo colorido na resposta; o veredito sai das regras da ferramenta, nao da IA
+        if (call.name === "avaliar_compra") {
+          const v = (result as { veredito?: unknown }).veredito;
+          if (v === "pode" || v === "cuidado" || v === "evite") {
+            onEvent({ type: "verdict", value: v });
+          }
+        }
         responseParts.push({
           // o id amarra a resposta a chamada certa quando ha varias na mesma rodada
           functionResponse: {
