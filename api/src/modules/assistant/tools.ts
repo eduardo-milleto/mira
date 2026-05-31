@@ -7,6 +7,7 @@ import {
   agregarGastosArgsSchema,
   avaliarCompraArgsSchema,
   buscarArgsSchema,
+  projetarMesArgsSchema,
 } from "./assistant.schemas.js";
 
 // Ferramentas read-only que a IA pode chamar pra consultar o banco. REGRAS DE OURO:
@@ -25,6 +26,39 @@ function parseDate(dateStr: string): Date {
 // "YYYY-MM" do mes de uma data, em UTC
 function monthKeyOf(d: Date): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+// "YYYY-MM" -> { year, month1 } (month1 = 1..12)
+function parseMonthKey(key: string): { year: number; month1: number } {
+  return { year: Number(key.slice(0, 4)), month1: Number(key.slice(5, 7)) };
+}
+
+// avanca/recua N meses sobre uma chave "YYYY-MM" (UTC), normalizando o ano na virada
+function addMonths(key: string, delta: number): string {
+  const { year, month1 } = parseMonthKey(key);
+  const d = new Date(Date.UTC(year, month1 - 1 + delta, 1));
+  return monthKeyOf(d);
+}
+
+// projeta o valor mensal de uma fonte de renda num ano alvo (mesma regra da tela de Ganhos):
+// - renda futura (startYear) so vale a partir do ano de inicio;
+// - cada step fixa o valor naquele ano e o crescimento volta a contar a partir dele;
+// - entre os pontos conhecidos, cresce pelo percentual anual (juros compostos).
+function monthlyIncomeForYear(
+  income: { monthlyAmount: number; annualGrowthPct: number; startYear: number | null; steps: { year: number; monthlyAmount: number }[] },
+  year: number,
+  currentYear: number,
+): number {
+  const baseYear = income.startYear ?? currentYear;
+  if (year < baseYear) return 0;
+  const knownPoints = [
+    { year: baseYear, amount: income.monthlyAmount },
+    ...income.steps.map((s) => ({ year: s.year, amount: s.monthlyAmount })),
+  ];
+  const anchor = knownPoints
+    .filter((p) => p.year <= year)
+    .reduce((latest, p) => (p.year > latest.year ? p : latest));
+  return anchor.amount * Math.pow(1 + income.annualGrowthPct / 100, year - anchor.year);
 }
 
 // escapa os curingas do LIKE/ILIKE (\ % _) pra tratar o termo do usuario como literal,
@@ -125,6 +159,17 @@ export const toolDeclarations = [
         descricao: { type: "STRING", description: "opcional, o que é a compra (ex: 'tênis novo')" },
       },
       required: ["valor"],
+    },
+  },
+  {
+    name: "projetar_mes",
+    description:
+      "Projeta a sobra de um mês FUTURO (ou qualquer mês) com números reais: renda recorrente já considerando crescimento anual e rendas que começam naquele ano, gasto fixo mensal, gasto pessoal estimado pela média dos últimos meses, e a sobra esperada (otimista = só renda menos fixo; realista = também desconta o gasto pessoal médio). Use sempre que o usuário perguntar sobre um mês que ainda não chegou ('quanto vou sobrar mês que vem?', 'quanto posso gastar a mais em junho?'). Você mesma resolve qual é o mês a partir da data de hoje; só passe 'mes' se o usuário citar um mês específico.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        mes: { type: "STRING", description: "opcional, mês alvo no formato AAAA-MM. Sem isso, projeta o próximo mês a partir de hoje" },
+      },
     },
   },
 ];
@@ -437,6 +482,89 @@ async function avaliarCompra(userId: string, rawArgs: unknown, now: Date) {
   };
 }
 
+// projetar_mes: projeta a sobra de um mes (default = proximo mes). renda projetada pela
+// mesma regra da tela de Ganhos (crescimento + steps + rendas futuras); gasto fixo recorrente;
+// gasto pessoal estimado pela media dos ultimos meses COMPLETOS com lancamento (mes futuro nao
+// tem gasto pessoal ainda, entao usar 0 inflaria a sobra — por isso a media historica).
+async function projetarMes(userId: string, rawArgs: unknown, now: Date) {
+  const parsed = projetarMesArgsSchema.safeParse(rawArgs);
+  if (!parsed.success) {
+    return { erro: parsed.error.issues[0]?.message ?? "argumentos inválidos" };
+  }
+  // mes alvo: o pedido, ou o proximo mes a partir de hoje
+  const targetMonth = parsed.data.mes ?? addMonths(monthKeyOf(now), 1);
+  const { year: targetYear } = parseMonthKey(targetMonth);
+  const currentYear = now.getUTCFullYear();
+
+  const [incomes, expenses, cards] = await Promise.all([
+    prisma.incomeSource.findMany({ where: { userId }, include: { steps: true } }),
+    prisma.expense.findMany({ where: { userId } }),
+    prisma.creditCard.findMany({ where: { userId } }),
+  ]);
+
+  // renda recorrente projetada pro ano do mes alvo (cada fonte crescendo/comecando conforme regra)
+  const rendaRecorrente = round2(
+    incomes.reduce(
+      (sum, i) =>
+        sum +
+        monthlyIncomeForYear(
+          {
+            monthlyAmount: i.monthlyAmount.toNumber(),
+            annualGrowthPct: i.annualGrowthPct.toNumber(),
+            startYear: i.startYear,
+            steps: i.steps.map((s) => ({ year: s.year, monthlyAmount: s.monthlyAmount.toNumber() })),
+          },
+          targetYear,
+          currentYear,
+        ),
+      0,
+    ),
+  );
+
+  // gasto fixo mensal = despesas avulsas + cartoes marcados pra entrar no mensal
+  const gastoFixo = round2(
+    expenses.reduce((sum, e) => sum + e.amount.toNumber(), 0) +
+      cards.filter((c) => c.includeInMonthly).reduce((sum, c) => sum + c.avgMonthlySpend.toNumber(), 0),
+  );
+
+  // gasto pessoal medio dos ultimos 3 meses COMPLETOS (exclui o mes corrente, ainda em curso).
+  // so conta meses que tiveram algum lancamento, pra media nao ser diluida por meses vazios.
+  const LOOKBACK = 3;
+  const curMonthKey = monthKeyOf(now);
+  const porMes = new Map<string, number>();
+  for (let i = 1; i <= LOOKBACK; i++) {
+    const mk = addMonths(curMonthKey, -i);
+    const { start, end } = monthRange(mk, now);
+    const rows = await prisma.personalExpense.findMany({
+      where: { userId, spentAt: { gte: start, lt: end } },
+    });
+    if (rows.length > 0) {
+      porMes.set(mk, round2(rows.reduce((sum, p) => sum + p.amount.toNumber(), 0)));
+    }
+  }
+  const mesesComGasto = [...porMes.values()];
+  const gastoPessoalMedio = mesesComGasto.length
+    ? round2(mesesComGasto.reduce((a, b) => a + b, 0) / mesesComGasto.length)
+    : 0;
+
+  const sobraOtimista = round2(rendaRecorrente - gastoFixo);
+  const sobraRealista = round2(sobraOtimista - gastoPessoalMedio);
+
+  return {
+    mes: targetMonth,
+    rendaRecorrente,
+    gastoFixoMensal: gastoFixo,
+    gastoPessoalMedioEstimado: gastoPessoalMedio,
+    mesesUsadosNaMedia: porMes.size,
+    sobraOtimista, // so renda - fixo (se nao gastar nada pessoal)
+    sobraRealista, // desconta tambem o gasto pessoal medio
+    observacao:
+      porMes.size === 0
+        ? "sem historico de gasto pessoal: a sobra realista assume gasto pessoal zero, o que e otimista"
+        : `gasto pessoal estimado pela media de ${porMes.size} mes(es) recentes`,
+  };
+}
+
 // dispatcher: recebe o nome da ferramenta e os argumentos crus da IA, executa e devolve o
 // resultado (sempre um objeto JSON-friendly). nome desconhecido vira erro legivel pra IA.
 export async function executeTool(
@@ -454,6 +582,8 @@ export async function executeTool(
       return agregarGastos(userId, args, now);
     case "avaliar_compra":
       return avaliarCompra(userId, args, now);
+    case "projetar_mes":
+      return projetarMes(userId, args, now);
     default:
       return { erro: `ferramenta desconhecida: ${name}` };
   }

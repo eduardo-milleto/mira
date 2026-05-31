@@ -33,6 +33,11 @@ export const agregarGastosArgsSchema = z.object({
   agrupar_por: z.enum(["categoria", "mes"]).optional(),
 });
 
+// projetar_mes: mes alvo opcional (default = proximo mes a partir de hoje)
+export const projetarMesArgsSchema = z.object({
+  mes: monthKey.optional(),
+});
+
 // avaliar_compra: valor obrigatorio; categoria/descricao ajudam a contextualizar
 export const avaliarCompraArgsSchema = z.object({
   valor: z.coerce

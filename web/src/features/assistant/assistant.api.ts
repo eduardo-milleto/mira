@@ -28,6 +28,7 @@ const TOOL_LABELS: Record<string, string> = {
   buscar: "procurando nos seus dados",
   agregar_gastos: "somando seus gastos",
   avaliar_compra: "avaliando a compra",
+  projetar_mes: "projetando o mês",
 };
 
 export function toolLabel(name: string): string {
