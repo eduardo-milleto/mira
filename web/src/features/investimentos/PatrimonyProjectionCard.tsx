@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Info } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { ComboboxField } from "../../components/ui/Combobox";
 import { formatBRL } from "../../lib/format";
-import { ProjectionChart } from "../overview/ProjectionChart";
-import { useInsightsData } from "../overview/insights.api";
+import { StackedProjectionChart } from "./StackedProjectionChart";
+import { projectInvestments } from "./projection";
+import { investmentKindOf, useInvestments } from "./investimentos.api";
 import { useProjectionSettings, useUpdateProjectionSettings } from "../projecoes/projecoes.api";
 
 // horizontes comuns; allowsCustomValue do combobox deixa digitar outro valor
@@ -15,7 +16,7 @@ const HORIZON_OPTIONS = ["3", "5", "10", "15", "20"];
 export function PatrimonyProjectionCard() {
   const navigate = useNavigate();
   // projeta so os investimentos (kind="investimento"), de fora os bens de patrimonio
-  const { data, isLoading, isError } = useInsightsData("investimento");
+  const { data: investments, isLoading, isError } = useInvestments();
   const { data: settings } = useProjectionSettings();
   const updateSettings = useUpdateProjectionSettings();
 
@@ -39,11 +40,23 @@ export function PatrimonyProjectionCard() {
     }
   }
 
-  const projection = data?.projection ?? [];
-  const first = projection[0]?.value;
-  const last = projection[projection.length - 1]?.value;
+  // horizonte efetivo: o valor digitado quando valido, senao a premissa salva (fallback 5 anos)
+  const parsedHorizon = Number.parseInt(horizon, 10);
+  const horizonYears =
+    Number.isInteger(parsedHorizon) && parsedHorizon >= 1 && parsedHorizon <= 30
+      ? parsedHorizon
+      : (settings?.horizonYears ?? 5);
+
+  const { rows, assets } = useMemo(() => {
+    const invItems = (investments ?? []).filter((i) => investmentKindOf(i) === "investimento");
+    return projectInvestments(invItems, horizonYears, new Date().getFullYear());
+  }, [investments, horizonYears]);
+
+  const hasData = rows.length > 0 && assets.length > 0;
+  const first = rows[0]?.total;
+  const last = rows[rows.length - 1]?.total;
   const growth = first && last ? Math.round((last / first - 1) * 100) : null;
-  const span = projection.length > 1 ? projection.length - 1 : 0;
+  const span = rows.length > 1 ? rows.length - 1 : 0;
 
   return (
     <Card className="p-6">
@@ -64,22 +77,27 @@ export function PatrimonyProjectionCard() {
 
       {isLoading ? (
         <p className="mt-4 text-sm text-muted">Calculando projeção...</p>
-      ) : isError || !projection.length ? (
+      ) : isError ? (
         <p className="mt-4 text-sm text-muted">Projeção indisponível no momento.</p>
+      ) : !hasData ? (
+        <p className="mt-4 text-sm text-muted">
+          Cadastre um investimento pra ver a projeção.
+        </p>
       ) : (
         <>
           <div className="mt-2 flex items-center gap-3">
             <p className="tnum text-4xl font-light tracking-tighter text-heading">
               {formatBRL(last ?? 0)}
             </p>
-            {growth !== null && (
+            {growth !== null && span > 0 && (
               <span className="tnum rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
-                +{growth}% em {span} anos
+                {growth >= 0 ? "+" : ""}
+                {growth}% em {span} {span === 1 ? "ano" : "anos"}
               </span>
             )}
           </div>
           <div className="mt-4">
-            <ProjectionChart data={projection} />
+            <StackedProjectionChart rows={rows} assets={assets} />
           </div>
           <Button
             variant="outline"
