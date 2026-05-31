@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import { monthRange } from "../../lib/month.js";
 import { computeSurplus, round2 } from "../../lib/surplus.js";
@@ -10,9 +11,11 @@ import {
 
 // Ferramentas read-only que a IA pode chamar pra consultar o banco. REGRAS DE OURO:
 // - toda query e SEMPRE escopada pelo userId (a IA nunca recebe userId; vem do servidor)
-// - tudo parametrizado via Prisma (o termo de busca vira parametro, nunca SQL concatenado)
+// - o termo de busca entra SEMPRE como parametro ($1, $2...), nunca concatenado em SQL. os
+//   unicos identificadores interpolados (nomes de coluna) sao constantes minhas, nao input.
 // - nada de escrita: so leitura. e impossivel a IA alterar/apagar dado por aqui.
-// - Decimal/Date do Prisma sao convertidos pra number/string na borda antes de devolver.
+// - busca insensivel a acento E maiuscula (unaccent + ILIKE) pra um app PT-BR achar tudo.
+// - Decimal/Date sao convertidos pra number/string na borda antes de devolver.
 
 // "YYYY-MM-DD" (data de calendario) -> Date meia-noite UTC, igual ao resto da app
 function parseDate(dateStr: string): Date {
@@ -22,6 +25,52 @@ function parseDate(dateStr: string): Date {
 // "YYYY-MM" do mes de uma data, em UTC
 function monthKeyOf(d: Date): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+// escapa os curingas do LIKE/ILIKE (\ % _) pra tratar o termo do usuario como literal,
+// senao um "%" digitado viraria coringa e casaria itens errados
+function likePattern(term: string): string {
+  return `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+}
+
+// versao sem os "%" das pontas: match exato (case/acento-insensitive) pra igualdade de categoria
+function exactPattern(term: string): string {
+  return term.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
+// monta "(unaccent(colA) ILIKE unaccent($p) OR unaccent(colB) ILIKE unaccent($p) ...)".
+// `columns` sao identificadores estaticos definidos por mim (nunca input do usuario), entao
+// interpola-los com Prisma.raw e seguro; o termo entra parametrizado.
+function likeAny(columns: string[], pattern: string): Prisma.Sql {
+  return Prisma.join(
+    columns.map(
+      (c) => Prisma.sql`unaccent(${Prisma.raw(`"${c}"`)}) ILIKE unaccent(${pattern})`,
+    ),
+    " OR ",
+  );
+}
+
+// "AND col >= ini::date AND col < fim::date" quando ha filtro de mes; senao vazio. comparamos
+// date com date (cast explicito) pra nao depender do fuso da sessao do banco.
+function dateClause(col: string, range: { start: Date; end: Date } | null): Prisma.Sql {
+  if (!range) return Prisma.empty;
+  const ini = range.start.toISOString().slice(0, 10);
+  const fim = range.end.toISOString().slice(0, 10);
+  return Prisma.sql`AND ${Prisma.raw(`"${col}"`)} >= ${ini}::date AND ${Prisma.raw(`"${col}"`)} < ${fim}::date`;
+}
+
+// converte Decimal/string/number vindo do $queryRaw pra number de forma defensiva
+function num(v: unknown): number {
+  if (v == null) return 0;
+  if (typeof v === "number") return v;
+  if (
+    typeof v === "object" &&
+    "toNumber" in (v as object) &&
+    typeof (v as { toNumber?: unknown }).toNumber === "function"
+  ) {
+    return (v as { toNumber: () => number }).toNumber();
+  }
+  return Number(v);
 }
 
 // declaracoes das ferramentas no formato do Gemini (subset do OpenAPI). a descricao e o que
@@ -36,7 +85,7 @@ export const toolDeclarations = [
   {
     name: "buscar",
     description:
-      "Procura por um TEXTO em TODAS as fontes de dados do usuario (gastos fixos, gastos pessoais, extras, cartoes, movimentos do cofre, investimentos/patrimonio e fontes de renda). Busca parcial e sem diferenciar maiusculas/minusculas. Use sempre que o usuario citar um nome especifico ('quanto gasto com Netflix?', 'tenho algo do Nubank?', 'achei uma cobranca da Amazon?'). Devolve os itens encontrados com fonte, descricao, categoria, valor e data.",
+      "Procura por um TEXTO em TODAS as fontes de dados do usuario (gastos fixos, gastos pessoais, extras, cartoes, movimentos do cofre, investimentos/patrimonio e fontes de renda). Busca parcial, ignorando maiusculas/minusculas e acentos. Use sempre que o usuario citar um nome especifico ('quanto gasto com Netflix?', 'tenho algo do Nubank?', 'achei uma cobranca da Amazon?'). Devolve os itens encontrados com fonte, descricao, categoria, valor e data.",
     parameters: {
       type: "OBJECT",
       properties: {
@@ -138,9 +187,8 @@ async function cofreBalance(userId: string): Promise<number> {
   );
 }
 
-// buscar: roda um contains case-insensitive em cada fonte, sempre escopado por userId. o
-// termo entra como parametro do Prisma (jamais concatenado em SQL). itens datados podem ser
-// filtrados por mes. cada fonte tem um teto de itens pra nao estourar o contexto da IA.
+// buscar: roda um unaccent+ILIKE em cada fonte, sempre escopado por userId. itens datados
+// podem ser filtrados por mes. cada fonte tem um teto de itens pra nao estourar o contexto.
 async function buscar(userId: string, rawArgs: unknown, now: Date) {
   const parsed = buscarArgsSchema.safeParse(rawArgs);
   if (!parsed.success) {
@@ -148,115 +196,107 @@ async function buscar(userId: string, rawArgs: unknown, now: Date) {
   }
   const { termo, mes, limite } = parsed.data;
   const take = limite ?? 15;
-  const like = { contains: termo, mode: "insensitive" as const };
-
-  // filtro de mes (so vale pras fontes com data); quando ausente, nao restringe
+  const p = likePattern(termo);
   const range = mes ? monthRange(mes, now) : null;
-  const dateFilter = range ? { gte: range.start, lt: range.end } : undefined;
 
   const [expenses, personal, extras, cards, cofre, investments, incomes] = await Promise.all([
-    prisma.expense.findMany({
-      where: { userId, name: like },
-      take,
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.personalExpense.findMany({
-      where: { userId, OR: [{ name: like }, { category: like }], ...(dateFilter ? { spentAt: dateFilter } : {}) },
-      take,
-      orderBy: { spentAt: "desc" },
-    }),
-    prisma.extra.findMany({
-      where: { userId, OR: [{ description: like }, { category: like }], ...(dateFilter ? { occurredAt: dateFilter } : {}) },
-      take,
-      orderBy: { occurredAt: "desc" },
-    }),
-    prisma.creditCard.findMany({
-      where: { userId, OR: [{ name: like }, { bank: like }, { brand: like }] },
-      take,
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.cofreMovement.findMany({
-      where: { userId, OR: [{ notes: like }, { source: like }], ...(dateFilter ? { occurredAt: dateFilter } : {}) },
-      take,
-      orderBy: { occurredAt: "desc" },
-    }),
-    prisma.investment.findMany({
-      where: { userId, OR: [{ name: like }, { category: like }, { notes: like }] },
-      take,
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.incomeSource.findMany({
-      where: { userId, name: like },
-      take,
-      orderBy: { createdAt: "desc" },
-    }),
+    prisma.$queryRaw<{ descricao: string; valor: unknown }[]>`
+      SELECT name AS descricao, amount AS valor
+      FROM expenses
+      WHERE "userId" = ${userId} AND (${likeAny(["name"], p)})
+      ORDER BY "createdAt" DESC LIMIT ${take}`,
+    prisma.$queryRaw<{ descricao: string; categoria: string; valor: unknown; data: string }[]>`
+      SELECT name AS descricao, category AS categoria, amount AS valor, to_char("spentAt", 'YYYY-MM-DD') AS data
+      FROM personal_expenses
+      WHERE "userId" = ${userId} AND (${likeAny(["name", "category"], p)}) ${dateClause("spentAt", range)}
+      ORDER BY "spentAt" DESC LIMIT ${take}`,
+    prisma.$queryRaw<{ kind: string; descricao: string; categoria: string | null; valor: unknown; data: string }[]>`
+      SELECT kind, description AS descricao, category AS categoria, amount AS valor, to_char("occurredAt", 'YYYY-MM-DD') AS data
+      FROM extras
+      WHERE "userId" = ${userId} AND (${likeAny(["description", "category"], p)}) ${dateClause("occurredAt", range)}
+      ORDER BY "occurredAt" DESC LIMIT ${take}`,
+    prisma.$queryRaw<{ name: string; bank: string | null; brand: string | null; valor: unknown; includeInMonthly: boolean }[]>`
+      SELECT name, bank, brand, "avgMonthlySpend" AS valor, "includeInMonthly"
+      FROM credit_cards
+      WHERE "userId" = ${userId} AND (${likeAny(["name", "bank", "brand"], p)})
+      ORDER BY "createdAt" DESC LIMIT ${take}`,
+    prisma.$queryRaw<{ direction: string; source: string; notes: string | null; valor: unknown; data: string }[]>`
+      SELECT direction, source, notes, amount AS valor, to_char("occurredAt", 'YYYY-MM-DD') AS data
+      FROM cofre_movements
+      WHERE "userId" = ${userId} AND (${likeAny(["notes", "source"], p)}) ${dateClause("occurredAt", range)}
+      ORDER BY "occurredAt" DESC LIMIT ${take}`,
+    prisma.$queryRaw<{ kind: string; descricao: string; categoria: string; valor: unknown; notes: string | null }[]>`
+      SELECT kind, name AS descricao, category AS categoria, value AS valor, notes
+      FROM investments
+      WHERE "userId" = ${userId} AND (${likeAny(["name", "category", "notes"], p)})
+      ORDER BY "createdAt" DESC LIMIT ${take}`,
+    prisma.$queryRaw<{ descricao: string; valor: unknown }[]>`
+      SELECT name AS descricao, "monthlyAmount" AS valor
+      FROM income_sources
+      WHERE "userId" = ${userId} AND (${likeAny(["name"], p)})
+      ORDER BY "createdAt" DESC LIMIT ${take}`,
   ]);
 
   const itens = [
     ...expenses.map((e) => ({
       fonte: "gasto fixo",
-      descricao: e.name,
+      descricao: e.descricao,
       categoria: null as string | null,
-      valor: e.amount.toNumber(),
+      valor: num(e.valor),
       data: null as string | null,
-      observacao: "recorrente (todo mes)",
+      observacao: "recorrente (todo mes)" as string | null,
     })),
-    ...personal.map((p) => ({
+    ...personal.map((pe) => ({
       fonte: "gasto pessoal",
-      descricao: p.name,
-      categoria: p.category,
-      valor: p.amount.toNumber(),
-      data: p.spentAt.toISOString().slice(0, 10),
+      descricao: pe.descricao,
+      categoria: pe.categoria,
+      valor: num(pe.valor),
+      data: pe.data,
       observacao: null as string | null,
     })),
     ...extras.map((e) => ({
       fonte: e.kind === "ganho" ? "ganho extra" : "gasto extra",
-      descricao: e.description,
-      categoria: e.category,
-      valor: e.amount.toNumber(),
-      data: e.occurredAt.toISOString().slice(0, 10),
-      observacao: "pontual",
+      descricao: e.descricao,
+      categoria: e.categoria,
+      valor: num(e.valor),
+      data: e.data,
+      observacao: "pontual" as string | null,
     })),
     ...cards.map((c) => ({
       fonte: "cartao de credito",
       descricao: [c.name, c.bank, c.brand].filter(Boolean).join(" / "),
-      categoria: null,
-      valor: c.avgMonthlySpend.toNumber(),
-      data: null,
+      categoria: null as string | null,
+      valor: num(c.valor),
+      data: null as string | null,
       observacao: c.includeInMonthly ? "entra no gasto mensal" : "nao entra no gasto mensal",
     })),
     ...cofre.map((m) => ({
       fonte: "cofre",
       descricao: m.notes ?? m.source,
-      categoria: m.source,
-      valor: m.amount.toNumber(),
-      data: m.occurredAt.toISOString().slice(0, 10),
-      observacao: m.direction,
+      categoria: m.source as string | null,
+      valor: num(m.valor),
+      data: m.data,
+      observacao: m.direction as string | null,
     })),
     ...investments.map((i) => ({
       fonte: i.kind === "patrimonio" ? "patrimonio" : "investimento",
-      descricao: i.name,
-      categoria: i.category,
-      valor: i.value.toNumber(),
-      data: null,
+      descricao: i.descricao,
+      categoria: i.categoria,
+      valor: num(i.valor),
+      data: null as string | null,
       observacao: i.notes,
     })),
     ...incomes.map((i) => ({
       fonte: "fonte de renda",
-      descricao: i.name,
-      categoria: null,
-      valor: i.monthlyAmount.toNumber(),
-      data: null,
-      observacao: "mensal",
+      descricao: i.descricao,
+      categoria: null as string | null,
+      valor: num(i.valor),
+      data: null as string | null,
+      observacao: "mensal" as string | null,
     })),
   ];
 
-  return {
-    termo,
-    mes: mes ?? null,
-    encontrados: itens.length,
-    itens,
-  };
+  return { termo, mes: mes ?? null, encontrados: itens.length, itens };
 }
 
 // agregar_gastos: soma gastos pessoais + gastos extras num intervalo, agrupando por categoria
@@ -294,9 +334,9 @@ async function agregarGastos(userId: string, rawArgs: unknown, now: Date) {
     groups.set(key, g);
   };
 
-  for (const p of personal) {
-    const key = groupBy === "mes" ? monthKeyOf(p.spentAt) : p.category;
-    add(key, p.amount.toNumber());
+  for (const pe of personal) {
+    const key = groupBy === "mes" ? monthKeyOf(pe.spentAt) : pe.category;
+    add(key, pe.amount.toNumber());
   }
   for (const e of extras) {
     const key = groupBy === "mes" ? monthKeyOf(e.occurredAt) : e.category ?? "Sem categoria";
@@ -332,20 +372,29 @@ async function avaliarCompra(userId: string, rawArgs: unknown, now: Date) {
   const sobraMes = await computeSurplus(userId, month, now);
   const saldoCofre = round2(await cofreBalance(userId));
 
-  // gasto e limite da categoria (quando informada)
+  // gasto e limite da categoria (quando informada). o match e por unaccent+ILIKE exato pra
+  // 'vestuario' casar 'Vestuário' (mesma regra de acento da busca)
   let gastoCategoria: number | null = null;
   let limiteCategoria: number | null = null;
   if (categoria) {
-    const [personal, limit] = await Promise.all([
-      prisma.personalExpense.findMany({
-        where: { userId, category: { equals: categoria, mode: "insensitive" }, spentAt: { gte: start, lt: end } },
-      }),
-      prisma.categoryLimit.findFirst({
-        where: { userId, category: { equals: categoria, mode: "insensitive" } },
-      }),
+    const cat = exactPattern(categoria);
+    const ini = start.toISOString().slice(0, 10);
+    const fim = end.toISOString().slice(0, 10);
+    const [sumRows, limitRows] = await Promise.all([
+      prisma.$queryRaw<{ total: unknown }[]>`
+        SELECT COALESCE(SUM(amount), 0) AS total
+        FROM personal_expenses
+        WHERE "userId" = ${userId}
+          AND unaccent(category) ILIKE unaccent(${cat})
+          AND "spentAt" >= ${ini}::date AND "spentAt" < ${fim}::date`,
+      prisma.$queryRaw<{ amount: unknown }[]>`
+        SELECT amount
+        FROM category_limits
+        WHERE "userId" = ${userId} AND unaccent(category) ILIKE unaccent(${cat})
+        LIMIT 1`,
     ]);
-    gastoCategoria = round2(personal.reduce((sum, p) => sum + p.amount.toNumber(), 0));
-    limiteCategoria = limit ? limit.amount.toNumber() : null;
+    gastoCategoria = round2(num(sumRows[0]?.total));
+    limiteCategoria = limitRows.length ? num(limitRows[0].amount) : null;
   }
 
   const sobraApos = round2(sobraMes - valor);
@@ -359,7 +408,7 @@ async function avaliarCompra(userId: string, rawArgs: unknown, now: Date) {
   let motivo: string;
   if (valor > fonteFolga) {
     veredito = "evite";
-    motivo = "o valor supera a sobra do mes somada ao cofre — nao ha de onde tirar sem se endividar";
+    motivo = "o valor supera a sobra do mes somada ao cofre, nao ha de onde tirar sem se endividar";
   } else if (valor > sobraMes) {
     veredito = "cuidado";
     motivo = "o valor passa da sobra do mes; cobriria a diferenca tirando do cofre";

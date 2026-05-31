@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+// base da API. exportada porque o chat do assistente consome via SSE com fetch direto
+// (o wrapper `api` faz res.json(), que nao serve pra stream)
+export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
 export class ApiError extends Error {
   status: number;
@@ -11,7 +13,11 @@ export class ApiError extends Error {
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const method = (options.method ?? "GET").toUpperCase();
   const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
+  // so seta Content-Type quando ha corpo: POST/DELETE sem body com application/json faz o
+  // Fastify recusar com 400 (FST_ERR_CTP_EMPTY_JSON_BODY) antes de chegar no handler
+  if (options.body != null) {
+    headers.set("Content-Type", "application/json");
+  }
 
   // CSRF e validado por Origin no backend; o cookie de sessao vai via credentials:include
   const res = await fetch(`${API_URL}${path}`, {

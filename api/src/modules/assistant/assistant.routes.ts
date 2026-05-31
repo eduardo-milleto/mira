@@ -61,7 +61,7 @@ export async function assistantRoutes(app: FastifyInstance) {
       .map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content }));
 
     // a partir daqui assumimos a resposta crua (SSE). hijack impede o Fastify de responder e
-    // tambem pula o hook de CORS — por isso setamos os headers de CORS na mao (precisa ser a
+    // tambem pula o hook de CORS, por isso setamos os headers de CORS na mao (precisa ser a
     // origem especifica, nao '*', porque o fetch vai com credentials: include).
     reply.hijack();
     reply.raw.writeHead(200, {
@@ -92,12 +92,13 @@ export async function assistantRoutes(app: FastifyInstance) {
         (e) => {
           if (e.type === "token") send("token", { text: e.text });
           else if (e.type === "tool") send("tool", { name: e.name });
+          else if (e.type === "verdict") send("verdict", { value: e.value });
           else if (e.type === "reset") send("reset", {});
         },
         ac.signal,
       );
 
-      // so persiste apos sucesso — evita pergunta orfa (sem resposta) no historico
+      // so persiste apos sucesso, evita pergunta orfa (sem resposta) no historico
       const [userMessage, assistantMessage] = await prisma.$transaction([
         prisma.assistantMessage.create({ data: { userId, role: "user", content: parsed.data.content } }),
         prisma.assistantMessage.create({ data: { userId, role: "assistant", content: finalText } }),
