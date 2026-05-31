@@ -52,11 +52,23 @@ export function GastosPage() {
   );
   const hasSpending = spending.slices.length > 0;
 
-  // gastos por area: classifica os nomes dos gastos mensais via IA e agrupa por area.
+  // gastos por area: cobre TODO o gasto do mes. classifica via IA os nomes dos gastos fixos
+  // e as categorias dos gastos pessoais (cartoes e extras viram "Outros" la no agrupamento).
   // nomes unicos e ordenados pra nao refazer a chamada quando a ordem muda (cache estavel).
-  const expenseNames = [...new Set((expenses ?? []).map((e) => e.name))].sort();
-  const { data: areaMap, isLoading: loadingAreas } = useExpenseAreas(expenseNames, !!user);
-  const areaBreakdown = buildAreaBreakdown(expenses ?? [], areaMap ?? {});
+  const areaNames = [
+    ...new Set([
+      ...(expenses ?? []).map((e) => e.name),
+      ...(personal?.byCategory ?? []).map((c) => c.category),
+    ]),
+  ].sort();
+  const { data: areaMap, isLoading: loadingAreas } = useExpenseAreas(areaNames, !!user);
+  const areaBreakdown = buildAreaBreakdown(
+    expenses ?? [],
+    cards ?? [],
+    personal?.byCategory ?? [],
+    extras?.gastoTotal ?? 0,
+    areaMap ?? {},
+  );
   const hasAreas = areaBreakdown.slices.length > 0;
 
   return (
