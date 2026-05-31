@@ -21,6 +21,7 @@ const investment = z.object({
   category: z.string(),
   value: z.number(),
   expectedReturnPct: z.number().nullable().optional(),
+  monthlyContribution: z.number().nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 

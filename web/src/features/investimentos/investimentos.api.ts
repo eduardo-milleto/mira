@@ -11,6 +11,7 @@ export type Investment = {
   value: number;
   expectedReturnPct: number | null; // % manual (expectativa / fallback)
   realizedReturnPct: number | null; // % anualizada do historico real (null = histórico curto)
+  monthlyContribution: number | null; // aporte mensal planejado que alimenta a projecao
   notes: string | null;
   createdAt: string;
 };
@@ -21,6 +22,7 @@ export type InvestmentInput = {
   category: string;
   value: number;
   expectedReturnPct: number | null;
+  monthlyContribution: number | null;
   notes: string | null;
 };
 

@@ -12,6 +12,12 @@ const pct = z
   .min(-100, "Percentual invalido")
   .max(1000, "Percentual muito alto");
 
+// aporte mensal planejado: nao negativo (0/null = sem aporte), mesmo teto dos valores
+const contribution = z
+  .number()
+  .min(0, "Valor invalido")
+  .max(1_000_000_000, "Valor muito alto");
+
 // patrimonio = bens (imovel, veiculo); investimento = ativos financeiros/renda passiva
 const investmentKind = z.enum(["investimento", "patrimonio"]);
 
@@ -23,6 +29,8 @@ export const investmentCreateSchema = z.object({
   value: money,
   // vazio (omitido ou null) = ativo nao rende na projecao (0% ao ano); a IA nao infere taxa
   expectedReturnPct: pct.nullish(),
+  // aporte mensal planejado que alimenta a projecao (so concretiza com evento de aporte real)
+  monthlyContribution: contribution.nullish(),
   notes: z.string().trim().max(500).nullish(),
 });
 
@@ -36,6 +44,7 @@ export const investmentUpdateSchema = z
     name: z.string().trim().min(1, "Informe o nome").max(80),
     category: z.string().trim().min(1, "Informe a categoria").max(40),
     expectedReturnPct: pct.nullable(),
+    monthlyContribution: contribution.nullable(),
     notes: z.string().trim().max(500).nullable(),
   })
   .partial()

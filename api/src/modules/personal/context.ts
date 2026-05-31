@@ -17,7 +17,7 @@ export type AdvisorContext = {
   limits: { category: string; amount: number; source: string }[];
   triggers: string | null;
   incomes: { name: string; monthlyAmount: number; annualGrowthPct: number; startYear: number | null }[];
-  investments: { name: string; category: string; value: number; expectedReturnPct: number | null; notes: string | null }[];
+  investments: { name: string; category: string; value: number; expectedReturnPct: number | null; monthlyContribution: number | null; notes: string | null }[];
   returnRatePct: number;
   horizonYears: number;
 };
@@ -114,6 +114,7 @@ export async function buildAdvisorContext(userId: string, now: Date): Promise<Ad
       category: i.category,
       value: i.value.toNumber(),
       expectedReturnPct: i.expectedReturnPct?.toNumber() ?? null,
+      monthlyContribution: i.monthlyContribution?.toNumber() ?? null,
       notes: i.notes,
     })),
     returnRatePct: settings?.returnRatePct.toNumber() ?? DEFAULT_RETURN_RATE,
@@ -197,8 +198,12 @@ export function formatContext(ctx: AdvisorContext): string {
       ? ctx.investments
           .map((i) => {
             const rate = i.expectedReturnPct != null ? `rende ${i.expectedReturnPct}%/ano` : "taxa a inferir";
+            const aporte =
+              i.monthlyContribution && i.monthlyContribution > 0
+                ? `, aporte mensal planejado R$ ${i.monthlyContribution}`
+                : "";
             const notes = i.notes ? ` — ${i.notes}` : "";
-            return `- ${i.name} [${i.category}]: R$ ${i.value} (${rate})${notes}`;
+            return `- ${i.name} [${i.category}]: R$ ${i.value} (${rate}${aporte})${notes}`;
           })
           .join("\n")
       : "(nao informado)",

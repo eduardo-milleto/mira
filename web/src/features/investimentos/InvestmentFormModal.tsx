@@ -34,6 +34,7 @@ export function InvestmentFormModal({
   const [category, setCategory] = useState("");
   const [value, setValue] = useState(0);
   const [expectedReturnPct, setExpectedReturnPct] = useState(0);
+  const [monthlyContribution, setMonthlyContribution] = useState(0);
   const [notes, setNotes] = useState("");
   const create = useCreateInvestment();
   const update = useUpdateInvestment();
@@ -47,6 +48,7 @@ export function InvestmentFormModal({
       setCategory(investment?.category ?? "");
       setValue(investment?.value ?? 0);
       setExpectedReturnPct(investment?.expectedReturnPct ?? 0);
+      setMonthlyContribution(investment?.monthlyContribution ?? 0);
       setNotes(investment?.notes ?? "");
       create.reset();
       update.reset();
@@ -65,6 +67,8 @@ export function InvestmentFormModal({
       category: category.trim(),
       // vazio = deixa a IA inferir a rentabilidade pela categoria/notes
       expectedReturnPct: expectedReturnPct !== 0 ? expectedReturnPct : null,
+      // aporte mensal planejado entra na projecao; 0 = sem aporte planejado
+      monthlyContribution: monthlyContribution > 0 ? monthlyContribution : null,
       notes: notes.trim() ? notes.trim() : null,
     };
     const onSuccess = () => onOpenChange(false);
@@ -124,6 +128,18 @@ export function InvestmentFormModal({
           onChange={setExpectedReturnPct}
           placeholder="Ex: 8,5"
         />
+
+        <div className="flex flex-col gap-2">
+          <MoneyInput
+            label="Aporte mensal esperado (opcional)"
+            value={monthlyContribution}
+            onChange={setMonthlyContribution}
+          />
+          <p className="text-xs text-faint">
+            Quanto você planeja aportar por mês. A Mira soma isso na projeção, mas pra valer mesmo
+            você precisa registrar o aporte na linha do tempo do ativo.
+          </p>
+        </div>
 
         <div className="flex flex-col gap-2">
           <Label className="text-sm text-muted">Premissas (opcional)</Label>
