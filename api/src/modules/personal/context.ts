@@ -18,11 +18,9 @@ export type AdvisorContext = {
   triggers: string | null;
   incomes: { name: string; monthlyAmount: number; annualGrowthPct: number; startYear: number | null }[];
   investments: { name: string; category: string; value: number; expectedReturnPct: number | null; monthlyContribution: number | null; notes: string | null }[];
-  returnRatePct: number;
   horizonYears: number;
 };
 
-const DEFAULT_RETURN_RATE = 10;
 const DEFAULT_HORIZON = 5;
 
 export async function buildAdvisorContext(userId: string, now: Date): Promise<AdvisorContext> {
@@ -117,7 +115,6 @@ export async function buildAdvisorContext(userId: string, now: Date): Promise<Ad
       monthlyContribution: i.monthlyContribution?.toNumber() ?? null,
       notes: i.notes,
     })),
-    returnRatePct: settings?.returnRatePct.toNumber() ?? DEFAULT_RETURN_RATE,
     horizonYears: settings?.horizonYears ?? DEFAULT_HORIZON,
   };
 }
@@ -210,7 +207,7 @@ export function formatContext(ctx: AdvisorContext): string {
   );
   lines.push("");
 
-  lines.push(`Premissas de projecao: horizonte ${ctx.horizonYears} anos, sobra investida rende ${ctx.returnRatePct}%/ano.`);
+  lines.push(`Premissas de projecao: horizonte ${ctx.horizonYears} anos. Cada ativo rende pela propria taxa (definida no investimento).`);
   lines.push("");
 
   lines.push("Gatilhos/contexto que o usuario descreveu:");

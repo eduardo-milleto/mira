@@ -44,7 +44,6 @@ export const insightsRequestSchema = z.object({
   assetBreakdown: z.array(breakdownItem).optional().default([]),
   incomeSources: z.array(incomeSource).optional().default([]),
   investments: z.array(investment).optional().default([]),
-  returnRatePct: z.number().optional(),
   horizonYears: z.number().int().min(1).max(30).optional().default(5),
   // saldo parado no cofre (caixa nao investida) + fechamentos de mes (contexto pra IA)
   cofreBalance: z.number().optional().default(0),

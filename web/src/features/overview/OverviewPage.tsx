@@ -17,7 +17,8 @@ import { buildPatrimony, expectedMonthlyVariationPct } from "../investimentos/pa
 import { usePersonalSummary } from "../gastos-pessoais/personal.api";
 import { useExtrasSummary } from "../extras/extras.api";
 import { HeroCard } from "./HeroCard";
-import { ProjectionChart } from "./ProjectionChart";
+import { StackedProjectionChart } from "../investimentos/StackedProjectionChart";
+import { useInvestmentProjection } from "../investimentos/useInvestmentProjection";
 import { BreakdownList } from "./BreakdownList";
 import { useInsightsData } from "./insights.api";
 import { featureLinks } from "./data";
@@ -116,14 +117,10 @@ export function OverviewPage() {
   const investExpectedPct = expectedMonthlyVariationPct(investAssets);
   const bensExpectedPct = expectedMonthlyVariationPct(bensAssets);
 
-  // mesma fonte de insights da Sugestoes IA e Projecoes (renda das fontes + premissas + gasto real)
+  // insights (saude financeira) alimentam o HeroCard; a projecao do patrimonio e determinista
   const insights = useInsightsData();
-
-  const projection = insights.data?.projection ?? [];
-  const first = projection[0]?.value;
-  const last = projection[projection.length - 1]?.value;
-  const growth = first && last ? Math.round((last / first - 1) * 100) : null;
-  const span = projection.length > 1 ? projection.length - 1 : 0;
+  // projeta o patrimonio inteiro (investimentos + bens), sem filtro de kind
+  const projection = useInvestmentProjection();
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
@@ -249,26 +246,28 @@ export function OverviewPage() {
 
       <Card className="p-6">
         <CardHeader title="Projeções Anuais" period="Anual" />
-        {insights.isLoading ? (
+        {projection.isLoading ? (
           <p className="mt-2 text-sm text-muted">Calculando projeção...</p>
-        ) : projection.length ? (
+        ) : projection.hasData ? (
           <>
             <div className="mt-2 flex items-center gap-3">
               <p className="tnum text-3xl font-light tracking-tighter text-heading">
-                {formatBRL(last ?? 0)}
+                {formatBRL(projection.last ?? 0)}
               </p>
-              {growth !== null && (
+              {projection.growth !== null && projection.span > 0 && (
                 <span className="tnum rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
-                  +{growth}% em {span} anos
+                  {projection.growth >= 0 ? "+" : ""}
+                  {projection.growth}% em {projection.span}{" "}
+                  {projection.span === 1 ? "ano" : "anos"}
                 </span>
               )}
             </div>
             <div className="mt-4">
-              <ProjectionChart data={projection} />
+              <StackedProjectionChart rows={projection.rows} assets={projection.assets} />
             </div>
           </>
         ) : (
-          <p className="mt-2 text-sm text-muted">Projeção indisponível no momento.</p>
+          <p className="mt-2 text-sm text-muted">Cadastre um investimento ou bem pra ver a projeção.</p>
         )}
       </Card>
 

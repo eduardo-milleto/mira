@@ -55,7 +55,6 @@ export type InsightsInput = {
   assetBreakdown: BreakdownInput[];
   incomeSources: IncomeSourceInput[];
   investments: InvestmentInput[];
-  returnRatePct: number;
   horizonYears: number;
   cofreBalance: number;
   monthCloses: MonthCloseInput[];
@@ -137,7 +136,6 @@ export function useInsightsData(kindFilter?: InvestmentKind) {
       monthlyContribution: i.monthlyContribution,
       notes: i.notes,
     })),
-    returnRatePct: settings?.returnRatePct ?? 10,
     horizonYears: settings?.horizonYears ?? 5,
     // caixa parada no cofre + fechamentos de mes (contexto pra IA: vazamentos fora do app)
     cofreBalance: cofreQuery.data?.balance ?? 0,
