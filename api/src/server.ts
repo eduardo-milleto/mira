@@ -21,7 +21,13 @@ export async function buildApp() {
   const app = Fastify({ logger: true });
 
   await app.register(cookie);
-  await app.register(cors, { origin: env.CORS_ORIGIN, credentials: true });
+  // methods explicito: sem isso o preflight (OPTIONS) so libera GET/HEAD/POST e o navegador
+  // barra DELETE/PUT/PATCH cross-origin em prod (front e api em dominios diferentes)
+  await app.register(cors, {
+    origin: env.CORS_ORIGIN,
+    credentials: true,
+    methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  });
   await app.register(jwt, {
     secret: env.JWT_SECRET,
     cookie: { cookieName: SESSION_COOKIE, signed: false },
