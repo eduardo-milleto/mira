@@ -39,11 +39,11 @@ export async function assistantRoutes(app: FastifyInstance) {
   // mensagens persistidas; "error" sinaliza falha.
   app.post("/chat", async (request, reply) => {
     if (!env.GEMINI_API_KEY) {
-      return reply.code(503).send({ error: "Assistente indisponivel: GEMINI_API_KEY nao configurada" });
+      return reply.code(503).send({ error: "Assistente indisponível: GEMINI_API_KEY não configurada" });
     }
     const parsed = assistantMessageSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Dados invalidos" });
+      return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Dados inválidos" });
     }
 
     const userId = request.user.sub;
@@ -111,7 +111,7 @@ export async function assistantRoutes(app: FastifyInstance) {
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       request.log.error({ err }, `falha no assistente: ${detail}`);
-      send("error", { error: "Nao foi possivel responder agora" });
+      send("error", { error: "Não foi possível responder agora" });
     } finally {
       if (!reply.raw.writableEnded) reply.raw.end();
     }

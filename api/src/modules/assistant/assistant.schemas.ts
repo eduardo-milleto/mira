@@ -13,11 +13,11 @@ export type AssistantMessageInput = z.infer<typeof assistantMessageSchema>;
 
 const monthKey = z
   .string()
-  .regex(/^\d{4}-\d{2}$/, "mes invalido (use AAAA-MM)");
+  .regex(/^\d{4}-\d{2}$/, "mês inválido (use AAAA-MM)");
 
 const dateKey = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "data invalida (use AAAA-MM-DD)");
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida (use AAAA-MM-DD)");
 
 // buscar: termo obrigatorio; mes e limite opcionais
 export const buscarArgsSchema = z.object({

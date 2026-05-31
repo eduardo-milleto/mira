@@ -79,19 +79,19 @@ export const toolDeclarations = [
   {
     name: "panorama",
     description:
-      "Retorna a visao geral financeira COMPLETA do usuario: renda mensal, ganhos/gastos extras do mes, gastos fixos (item a item), gasto pessoal do mes por categoria (com limites), patrimonio por categoria, investimentos, fontes de renda, saldo do cofre, sobra estimada do mes e premissas de projecao. Use para perguntas amplas ('como estao minhas financas?', 'onde posso economizar?') ou para achar gaps que o usuario nao notaria.",
+      "Retorna a visão geral financeira COMPLETA do usuário: renda mensal, ganhos/gastos extras do mês, gastos fixos (item a item), gasto pessoal do mês por categoria (com limites), patrimônio por categoria, investimentos, fontes de renda, saldo do cofre, sobra estimada do mês e premissas de projeção. Use para perguntas amplas ('como estão minhas finanças?', 'onde posso economizar?') ou para achar gaps que o usuário não notaria.",
     parameters: { type: "OBJECT", properties: {} },
   },
   {
     name: "buscar",
     description:
-      "Procura por um TEXTO em TODAS as fontes de dados do usuario (gastos fixos, gastos pessoais, extras, cartoes, movimentos do cofre, investimentos/patrimonio e fontes de renda). Busca parcial, ignorando maiusculas/minusculas e acentos. Use sempre que o usuario citar um nome especifico ('quanto gasto com Netflix?', 'tenho algo do Nubank?', 'achei uma cobranca da Amazon?'). Devolve os itens encontrados com fonte, descricao, categoria, valor e data.",
+      "Procura por um TEXTO em TODAS as fontes de dados do usuário (gastos fixos, gastos pessoais, extras, cartões, movimentos do cofre, investimentos/patrimônio e fontes de renda). Busca parcial, ignorando maiúsculas/minúsculas e acentos. Use sempre que o usuário citar um nome específico ('quanto gasto com Netflix?', 'tenho algo do Nubank?', 'achei uma cobrança da Amazon?'). Devolve os itens encontrados com fonte, descrição, categoria, valor e data.",
     parameters: {
       type: "OBJECT",
       properties: {
         termo: { type: "STRING", description: "texto a procurar (ex: 'netflix', 'uber', 'nubank')" },
-        mes: { type: "STRING", description: "opcional, filtra itens datados por mes no formato AAAA-MM" },
-        limite: { type: "NUMBER", description: "opcional, maximo de itens por fonte (1 a 30, padrao 15)" },
+        mes: { type: "STRING", description: "opcional, filtra itens datados por mês no formato AAAA-MM" },
+        limite: { type: "NUMBER", description: "opcional, máximo de itens por fonte (1 a 30, padrão 15)" },
       },
       required: ["termo"],
     },
@@ -99,16 +99,16 @@ export const toolDeclarations = [
   {
     name: "agregar_gastos",
     description:
-      "Soma os gastos do usuario num periodo, agrupados por categoria ou por mes. Considera gastos pessoais (compras do dia a dia) e gastos extras (pontuais). Use para 'quanto gastei em delivery nos ultimos meses?', 'qual minha maior categoria de gasto?', 'gastei mais em qual mes?'. Sem periodo informado, usa o mes atual.",
+      "Soma os gastos do usuário num período, agrupados por categoria ou por mês. Considera gastos pessoais (compras do dia a dia) e gastos extras (pontuais). Use para 'quanto gastei em delivery nos últimos meses?', 'qual minha maior categoria de gasto?', 'gastei mais em qual mês?'. Sem período informado, usa o mês atual.",
     parameters: {
       type: "OBJECT",
       properties: {
-        de: { type: "STRING", description: "inicio do periodo (AAAA-MM-DD), inclusivo" },
-        ate: { type: "STRING", description: "fim do periodo (AAAA-MM-DD), inclusivo" },
+        de: { type: "STRING", description: "início do período (AAAA-MM-DD), inclusivo" },
+        ate: { type: "STRING", description: "fim do período (AAAA-MM-DD), inclusivo" },
         agrupar_por: {
           type: "STRING",
           enum: ["categoria", "mes"],
-          description: "como agrupar o total (padrao: categoria)",
+          description: "como agrupar o total (padrão: categoria)",
         },
       },
     },
@@ -116,13 +116,13 @@ export const toolDeclarations = [
   {
     name: "avaliar_compra",
     description:
-      "Avalia se o usuario pode/deve fazer uma compra ou um gasto de um certo valor. Calcula com NUMEROS reais: sobra do mes atual, quanto ja gastou na categoria, o limite da categoria (se existir), o saldo do cofre e o impacto da compra. Devolve um veredito ('pode', 'cuidado' ou 'evite') baseado nesses numeros. Use sempre que o usuario perguntar se pode/deve comprar ou gastar algo.",
+      "Avalia se o usuário pode/deve fazer uma compra ou um gasto de um certo valor. Calcula com NÚMEROS reais: sobra do mês atual, quanto já gastou na categoria, o limite da categoria (se existir), o saldo do cofre e o impacto da compra. Devolve um veredito ('pode', 'cuidado' ou 'evite') baseado nesses números. Use sempre que o usuário perguntar se pode/deve comprar ou gastar algo.",
     parameters: {
       type: "OBJECT",
       properties: {
         valor: { type: "NUMBER", description: "valor da compra/gasto em reais" },
         categoria: { type: "STRING", description: "opcional, categoria da compra (ex: 'Lazer', 'Delivery')" },
-        descricao: { type: "STRING", description: "opcional, o que e a compra (ex: 'tenis novo')" },
+        descricao: { type: "STRING", description: "opcional, o que é a compra (ex: 'tênis novo')" },
       },
       required: ["valor"],
     },
@@ -192,7 +192,7 @@ async function cofreBalance(userId: string): Promise<number> {
 async function buscar(userId: string, rawArgs: unknown, now: Date) {
   const parsed = buscarArgsSchema.safeParse(rawArgs);
   if (!parsed.success) {
-    return { erro: parsed.error.issues[0]?.message ?? "argumentos invalidos" };
+    return { erro: parsed.error.issues[0]?.message ?? "argumentos inválidos" };
   }
   const { termo, mes, limite } = parsed.data;
   const take = limite ?? 15;
@@ -244,7 +244,7 @@ async function buscar(userId: string, rawArgs: unknown, now: Date) {
       categoria: null as string | null,
       valor: num(e.valor),
       data: null as string | null,
-      observacao: "recorrente (todo mes)" as string | null,
+      observacao: "recorrente (todo mês)" as string | null,
     })),
     ...personal.map((pe) => ({
       fonte: "gasto pessoal",
@@ -268,7 +268,7 @@ async function buscar(userId: string, rawArgs: unknown, now: Date) {
       categoria: null as string | null,
       valor: num(c.valor),
       data: null as string | null,
-      observacao: c.includeInMonthly ? "entra no gasto mensal" : "nao entra no gasto mensal",
+      observacao: c.includeInMonthly ? "entra no gasto mensal" : "não entra no gasto mensal",
     })),
     ...cofre.map((m) => ({
       fonte: "cofre",
@@ -304,7 +304,7 @@ async function buscar(userId: string, rawArgs: unknown, now: Date) {
 async function agregarGastos(userId: string, rawArgs: unknown, now: Date) {
   const parsed = agregarGastosArgsSchema.safeParse(rawArgs);
   if (!parsed.success) {
-    return { erro: parsed.error.issues[0]?.message ?? "argumentos invalidos" };
+    return { erro: parsed.error.issues[0]?.message ?? "argumentos inválidos" };
   }
   const { agrupar_por } = parsed.data;
   const groupBy = agrupar_por ?? "categoria";
@@ -318,7 +318,7 @@ async function agregarGastos(userId: string, rawArgs: unknown, now: Date) {
     : cur.end;
 
   if (start >= end) {
-    return { erro: "periodo invalido: 'de' precisa ser anterior a 'ate'" };
+    return { erro: "período inválido: 'de' precisa ser anterior a 'ate'" };
   }
 
   const [personal, extras] = await Promise.all([
@@ -362,7 +362,7 @@ async function agregarGastos(userId: string, rawArgs: unknown, now: Date) {
 async function avaliarCompra(userId: string, rawArgs: unknown, now: Date) {
   const parsed = avaliarCompraArgsSchema.safeParse(rawArgs);
   if (!parsed.success) {
-    return { erro: parsed.error.issues[0]?.message ?? "argumentos invalidos" };
+    return { erro: parsed.error.issues[0]?.message ?? "argumentos inválidos" };
   }
   const { valor, categoria, descricao } = parsed.data;
   const month = monthKeyOf(now);
@@ -408,19 +408,19 @@ async function avaliarCompra(userId: string, rawArgs: unknown, now: Date) {
   let motivo: string;
   if (valor > fonteFolga) {
     veredito = "evite";
-    motivo = "o valor supera a sobra do mes somada ao cofre, nao ha de onde tirar sem se endividar";
+    motivo = "o valor supera a sobra do mês somada ao cofre, não há de onde tirar sem se endividar";
   } else if (valor > sobraMes) {
     veredito = "cuidado";
-    motivo = "o valor passa da sobra do mes; cobriria a diferenca tirando do cofre";
+    motivo = "o valor passa da sobra do mês; cobriria a diferença tirando do cofre";
   } else if (estouraLimite) {
     veredito = "cuidado";
-    motivo = "cabe na sobra do mes, mas estoura o limite da categoria";
+    motivo = "cabe na sobra do mês, mas estoura o limite da categoria";
   } else if (sobraMes > 0 && valor > sobraMes * 0.5) {
     veredito = "cuidado";
     motivo = "cabe na sobra, mas consome mais da metade dela";
   } else {
     veredito = "pode";
-    motivo = "cabe tranquilo na sobra do mes sem comprometer o cofre nem o limite";
+    motivo = "cabe tranquilo na sobra do mês sem comprometer o cofre nem o limite";
   }
 
   return {
