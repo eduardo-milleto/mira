@@ -33,16 +33,16 @@ type NavItem = { icon: LucideIcon; label: string; to?: string; exact?: boolean }
 
 // itens com `to` navegam; os demais ainda nao tem pagina (placeholder)
 const navItems: NavItem[] = [
-  { icon: Home, label: "Visão geral", to: "/", exact: true },
-  { icon: CalendarDays, label: "Ganhos mensais", to: "/ganhos" },
-  { icon: Wallet, label: "Gastos mensais", to: "/gastos" },
+  { icon: Home, label: "Visão Geral", to: "/", exact: true },
+  { icon: CalendarDays, label: "Ganhos Mensais", to: "/ganhos" },
+  { icon: Wallet, label: "Gastos Mensais", to: "/gastos" },
   { icon: ArrowDownUp, label: "Extras", to: "/extras" },
   { icon: BarChart3, label: "Projeções", to: "/projecoes" },
   { icon: Sparkles, label: "Sugestões IA", to: "/sugestoes" },
   { icon: Target, label: "Investimentos", to: "/investimentos" },
   { icon: Landmark, label: "Patrimônio", to: "/patrimonio" },
   { icon: Vault, label: "Cofre", to: "/cofre" },
-  { icon: Building2, label: "Saldo no banco", to: "/saldo-banco" },
+  { icon: Building2, label: "Saldo No Banco", to: "/saldo-banco" },
 ];
 
 const navBase = "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm outline-none transition";

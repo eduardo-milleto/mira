@@ -1,3 +1,5 @@
+import { titleCase } from "../../lib/text";
+
 type HealthGaugeProps = {
   value?: number;
   label?: string;
@@ -14,7 +16,7 @@ export function HealthGauge({ value, label, loading }: HealthGaugeProps) {
 
   // texto central conforme estado: numero, "..." (calculando) ou "—" (indisponivel)
   const centerValue = hasValue ? `${Math.round(value)}%` : loading ? "..." : "—";
-  const centerLabel = hasValue ? (label ?? "") : loading ? "Calculando..." : "Indisponível";
+  const centerLabel = hasValue ? titleCase(label) : loading ? "Calculando..." : "Indisponível";
 
   return (
     <div className="relative flex h-56 w-56 items-center justify-center">
@@ -48,7 +50,7 @@ export function HealthGauge({ value, label, loading }: HealthGaugeProps) {
         )}
       </svg>
       <div className="absolute flex flex-col items-center text-center">
-        <span className="text-sm text-muted">Saúde financeira</span>
+        <span className="text-sm text-muted">Saúde Financeira</span>
         <span className="tnum text-5xl font-light tracking-tighter text-heading">{centerValue}</span>
         <span className="text-lg font-light text-brand">{centerLabel}</span>
       </div>
