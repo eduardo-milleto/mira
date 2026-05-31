@@ -11,6 +11,8 @@ import mercadoPagoLogo from "../../assets/banks/mercado-pago.png";
 import amexLogo from "../../assets/banks/amex.png";
 import eloLogo from "../../assets/banks/elo.png";
 import hipercardLogo from "../../assets/banks/hipercard.png";
+import visaLogo from "../../assets/banks/visa.png";
+import mastercardLogo from "../../assets/banks/mastercard.png";
 import santanderLogo from "../../assets/banks/santander.png";
 import bancoDoBrasilLogo from "../../assets/banks/banco-do-brasil.png";
 import c6Logo from "../../assets/banks/c6.png";
@@ -72,6 +74,8 @@ const BRAND_LOGOS: Record<string, BankLogo> = {
   amex,
   elo: makeLogo(eloLogo, "Elo"),
   hipercard: makeLogo(hipercardLogo, "Hipercard"),
+  visa: makeLogo(visaLogo, "Visa"),
+  mastercard: makeLogo(mastercardLogo, "Mastercard"),
 };
 
 function lookup(value: string | null | undefined, map: Record<string, BankLogo>): BankLogo | null {
