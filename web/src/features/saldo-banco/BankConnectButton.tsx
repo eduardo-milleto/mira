@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { PluggyConnect } from "react-pluggy-connect";
 import { Button } from "../../components/ui/Button";
 import { useConnectToken } from "./saldo-banco.api";
@@ -35,19 +36,23 @@ export function BankConnectButton({ children, onItem, variant = "primary" }: Pro
         <p className="mt-2 text-xs text-negative">Nao foi possivel iniciar a conexao. Tente de novo.</p>
       )}
 
-      {token && (
-        <PluggyConnect
-          connectToken={token}
-          includeSandbox={import.meta.env.DEV}
-          theme="dark"
-          onSuccess={({ item }) => {
-            setToken(null);
-            onItem(item.id);
-          }}
-          onError={() => setToken(null)}
-          onClose={() => setToken(null)}
-        />
-      )}
+      {/* portal pro body: o overlay do widget e position:fixed e ficaria preso dentro do
+          Card (que tem backdrop-blur, virando containing block). no body ele centraliza certo. */}
+      {token &&
+        createPortal(
+          <PluggyConnect
+            connectToken={token}
+            includeSandbox={import.meta.env.DEV}
+            theme="dark"
+            onSuccess={({ item }) => {
+              setToken(null);
+              onItem(item.id);
+            }}
+            onError={() => setToken(null)}
+            onClose={() => setToken(null)}
+          />,
+          document.body,
+        )}
     </>
   );
 }
