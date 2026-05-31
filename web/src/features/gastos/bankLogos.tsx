@@ -83,10 +83,17 @@ function lookup(value: string | null | undefined, map: Record<string, BankLogo>)
   return map[value.trim().toLowerCase()] ?? null;
 }
 
-// o banco manda; so cai pra bandeira quando o banco nao tem logo registrado.
+// logo do banco manda; so cai pra bandeira quando nenhum dos campos tem banco.
+// procuramos nos dois mapas para cada campo porque o usuario pode digitar uma
+// bandeira (ex: "American Express") no campo banco e vice-versa.
 export function getBankLogo(
   bank: string | null | undefined,
   brand?: string | null,
 ): BankLogo | null {
-  return lookup(bank, BANK_LOGOS) ?? lookup(brand, BRAND_LOGOS);
+  return (
+    lookup(bank, BANK_LOGOS) ??
+    lookup(brand, BANK_LOGOS) ??
+    lookup(bank, BRAND_LOGOS) ??
+    lookup(brand, BRAND_LOGOS)
+  );
 }
