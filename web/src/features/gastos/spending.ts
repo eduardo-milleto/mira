@@ -66,18 +66,30 @@ export function buildSpendingDashboard(
   };
 }
 
-// monta a rosca "gastos por area": agrupa SO os gastos mensais nomeados (Expense) pela
-// area que a IA classificou (mapa nome -> area), soma por area e adiciona % + cor por fatia.
-// nomes ainda sem classificacao (mapa carregando ou desconhecido) caem em "Outros".
+// monta a rosca "gastos por area" cobrindo TODO o gasto mensal (mesmo total da Composicao):
+// - gastos nomeados (Expense): area que a IA classificou pelo nome
+// - gastos pessoais: ja vem por categoria; a IA mapeia cada categoria numa area
+// - cartoes e extras: gasto MISTO (varias areas no mesmo lancamento), entao caem em "Outros"
+//   porque nao da pra cravar uma area unica sem o detalhe item a item
+// nomes/categorias ainda sem classificacao (mapa carregando) tambem caem em "Outros".
 export function buildAreaBreakdown(
   expenses: Expense[],
+  cards: CreditCard[],
+  personalByCategory: { category: string; spent: number }[],
+  extraGastoTotal: number,
   areas: Record<string, string>,
 ): { total: number; slices: SpendingSlice[] } {
   const byArea = new Map<string, number>();
-  for (const e of expenses) {
-    const area = areas[e.name] ?? "Outros";
-    byArea.set(area, (byArea.get(area) ?? 0) + e.amount);
-  }
+  const add = (area: string, value: number) => {
+    if (value > 0) byArea.set(area, (byArea.get(area) ?? 0) + value);
+  };
+
+  for (const e of expenses) add(areas[e.name] ?? "Outros", e.amount);
+  for (const c of personalByCategory) add(areas[c.category] ?? "Outros", c.spent);
+  // cartoes do mensal e extras: gasto misto, sem como cravar uma area -> Outros
+  for (const c of cards) if (c.includeInMonthly) add("Outros", c.avgMonthlySpend);
+  add("Outros", extraGastoTotal);
+
   const total = [...byArea.values()].reduce((sum, value) => sum + value, 0);
 
   const slices: SpendingSlice[] = [...byArea.entries()]
