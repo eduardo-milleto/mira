@@ -49,7 +49,9 @@ export function PatrimonyProjectionCard() {
 
   const { rows, assets } = useMemo(() => {
     const invItems = (investments ?? []).filter((i) => investmentKindOf(i) === "investimento");
-    return projectInvestments(invItems, horizonYears, new Date().getFullYear());
+    const now = new Date();
+    // getMonth() e 0-based; +1 deixa janeiro=1 ... dezembro=12 pro calculo ate o fim do ano
+    return projectInvestments(invItems, horizonYears, now.getFullYear(), now.getMonth() + 1);
   }, [investments, horizonYears]);
 
   const hasData = rows.length > 0 && assets.length > 0;

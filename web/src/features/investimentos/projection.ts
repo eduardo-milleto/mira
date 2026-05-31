@@ -39,12 +39,15 @@ function projectAsset(value0: number, monthlyRate: number, monthly: number, mont
 }
 
 // projeta cada investimento ano a ano (juros compostos por ativo + aporte mensal planejado).
+// cada ponto e o valor projetado pro FIM do ano (dezembro): no ano corrente conta so os meses
+// que faltam ate dezembro (currentMonth 1-12), e os anos seguintes somam 12 meses cada.
 // determinista de proposito: o total e sempre a soma dos ativos, e cada ativo so cresce pela
 // propria taxa — espelha a premissa honesta da projecao (a sobra do cofre NAO entra aqui).
 export function projectInvestments(
   investments: Investment[],
   horizonYears: number,
   currentYear: number,
+  currentMonth: number,
 ): InvestmentProjection {
   const assets: ProjectionAsset[] = investments.map((inv, i) => ({
     key: `a${i}`,
@@ -60,10 +63,13 @@ export function projectInvestments(
     return { value0: inv.value, monthlyRate, monthly: inv.monthlyContribution ?? 0 };
   });
 
+  // meses que faltam ate dezembro do ano corrente (maio = 5 -> 7 meses ate dez)
+  const monthsToYearEnd = Math.max(0, 12 - currentMonth);
+
   const rows: ProjectionRow[] = [];
-  // um ponto por ano, de currentYear (ano 0 = valor atual) ate o fim do horizonte
+  // um ponto por ano, sempre projetado pro fim do ano (dezembro), do corrente ate o horizonte
   for (let y = 0; y < horizonYears; y++) {
-    const months = y * 12;
+    const months = monthsToYearEnd + y * 12;
     const row: ProjectionRow = { year: String(currentYear + y), total: 0 };
     let total = 0;
     prepared.forEach((p, i) => {
