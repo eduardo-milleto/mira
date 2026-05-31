@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { CreditCard as CreditCardIcon, Pencil, Plus, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowDownUp, CreditCard as CreditCardIcon, ListFilter, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Switch } from "../../components/ui/Switch";
+import { Select } from "../../components/ui/Select";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { formatBRL } from "../../lib/format";
 import { getBankLogo } from "./bankLogos";
@@ -14,6 +15,22 @@ import {
   type CreditCard,
 } from "./gastos.api";
 
+type SortBy = "spend-desc" | "spend-asc" | "name" | "recent";
+type StatusFilter = "all" | "included" | "excluded";
+
+const SORT_OPTIONS: { value: SortBy; label: string }[] = [
+  { value: "spend-desc", label: "Maior gasto" },
+  { value: "spend-asc", label: "Menor gasto" },
+  { value: "name", label: "Nome (A-Z)" },
+  { value: "recent", label: "Mais recentes" },
+];
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "included", label: "No gasto mensal" },
+  { value: "excluded", label: "Fora do gasto mensal" },
+];
+
 export function CardsTab() {
   const { data: cards, isLoading } = useCreditCards();
   const update = useUpdateCard();
@@ -22,6 +39,39 @@ export function CardsTab() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CreditCard | undefined>();
   const [toDelete, setToDelete] = useState<CreditCard | undefined>();
+
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<StatusFilter>("all");
+  const [sortBy, setSortBy] = useState<SortBy>("spend-desc");
+
+  // aplica busca (nome/banco/bandeira) + filtro de status + ordenacao
+  const visible = useMemo(() => {
+    if (!cards) return [];
+    const q = query.trim().toLowerCase();
+    const filtered = cards.filter((card) => {
+      if (status === "included" && !card.includeInMonthly) return false;
+      if (status === "excluded" && card.includeInMonthly) return false;
+      if (!q) return true;
+      return [card.name, card.bank, card.brand]
+        .filter(Boolean)
+        .some((field) => field!.toLowerCase().includes(q));
+    });
+    const sorted = [...filtered];
+    sorted.sort((a, b) => {
+      switch (sortBy) {
+        case "spend-asc":
+          return a.avgMonthlySpend - b.avgMonthlySpend;
+        case "name":
+          return a.name.localeCompare(b.name, "pt-BR");
+        case "recent":
+          return b.createdAt.localeCompare(a.createdAt);
+        case "spend-desc":
+        default:
+          return b.avgMonthlySpend - a.avgMonthlySpend;
+      }
+    });
+    return sorted;
+  }, [cards, query, status, sortBy]);
 
   function openCreate() {
     setEditing(undefined);
@@ -52,6 +102,37 @@ export function CardsTab() {
         </Button>
       </div>
 
+      {!isLoading && !!cards?.length && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex-1 sm:max-w-xs">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nome, banco ou bandeira"
+              className="w-full rounded-xl border border-border bg-surface-2 py-2.5 pl-10 pr-3 text-sm text-heading placeholder:text-faint outline-none transition focus:border-brand/60 focus:ring-2 focus:ring-brand/20"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Select
+              label="Filtrar"
+              value={status}
+              onChange={setStatus}
+              options={STATUS_OPTIONS}
+              icon={<ListFilter className="h-4 w-4" />}
+            />
+            <Select
+              label="Ordenar"
+              value={sortBy}
+              onChange={setSortBy}
+              options={SORT_OPTIONS}
+              icon={<ArrowDownUp className="h-4 w-4" />}
+            />
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <Card className="p-6 text-sm text-muted">Carregando...</Card>
       ) : !cards?.length ? (
@@ -60,9 +141,15 @@ export function CardsTab() {
           <p className="text-sm text-muted">Nenhum cartao cadastrado ainda.</p>
           <p className="text-xs text-faint">Cadastre um cartao e marque para incluir no gasto mensal.</p>
         </Card>
+      ) : !visible.length ? (
+        <Card className="flex flex-col items-center gap-2 px-6 py-12 text-center">
+          <Search className="h-8 w-8 text-faint" />
+          <p className="text-sm text-muted">Nenhum cartao encontrado.</p>
+          <p className="text-xs text-faint">Ajuste a busca ou os filtros para ver seus cartoes.</p>
+        </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {cards.map((card) => {
+          {visible.map((card) => {
             const BankLogo = getBankLogo(card.bank, card.brand);
             return (
             <Card key={card.id} className="flex flex-col gap-4 p-5">
