@@ -85,7 +85,7 @@ async function readStream(
         );
         break;
       case "error":
-        handlers.onError(typeof d.error === "string" ? d.error : "Nao foi possivel responder agora");
+        handlers.onError(typeof d.error === "string" ? d.error : "Não foi possível responder agora");
         break;
     }
   };
@@ -130,13 +130,13 @@ export async function streamAssistantChat(
       signal,
     });
   } catch {
-    if (!signal.aborted) handlers.onError("Sem conexao com o servidor");
+    if (!signal.aborted) handlers.onError("Sem conexão com o servidor");
     return;
   }
 
   // erros tratados (503 sem chave, 400 validacao, 401 sessao) vem como JSON, nao stream
   if (!res.ok || !res.body) {
-    let message = "Nao foi possivel responder agora";
+    let message = "Não foi possível responder agora";
     try {
       const body = (await res.json()) as { error?: string };
       if (body?.error) message = body.error;
@@ -150,7 +150,7 @@ export async function streamAssistantChat(
   try {
     await readStream(res.body, handlers, signal);
   } catch {
-    if (!signal.aborted) handlers.onError("A conexao caiu durante a resposta");
+    if (!signal.aborted) handlers.onError("A conexão caiu durante a resposta");
   }
 }
 

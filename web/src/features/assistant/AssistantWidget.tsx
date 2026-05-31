@@ -9,7 +9,7 @@ import { VerdictPill } from "./VerdictPill";
 
 // sugestoes de partida (so aparecem no estado vazio) pra mostrar o que o assistente faz
 const SUGGESTIONS = [
-  "Onde posso economizar este mes?",
+  "Onde posso economizar este mês?",
   "Quanto gasto com delivery?",
   "Posso gastar R$ 500 com um fone?",
 ];
@@ -149,7 +149,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
               <p className="text-sm text-heading">Oi! Sou a Mira.</p>
               <p className="mx-auto mt-1 max-w-[280px] text-xs font-light leading-relaxed text-muted">
                 Eu olho seus dados de verdade pra te responder. Posso achar gastos, somar por
-                categoria e dizer se cabe no seu mes.
+                categoria e dizer se cabe no seu mês.
               </p>
             </div>
             <div className="mt-1 flex w-full flex-col gap-2">
@@ -206,7 +206,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Pergunte sobre suas financas..."
+          placeholder="Pergunte sobre suas finanças..."
           aria-label="Mensagem"
           className={cn(
             "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-heading",
@@ -228,7 +228,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
         isOpen={confirmClear}
         onOpenChange={setConfirmClear}
         title="Limpar conversa"
-        description="Isso apaga todo o historico do chat com a Mira. Essa acao nao pode ser desfeita."
+        description="Isso apaga todo o histórico do chat com a Mira. Essa ação não pode ser desfeita."
         confirmLabel="Limpar"
         isPending={clear.isPending}
         onConfirm={() => clear.mutate(undefined, { onSuccess: () => setConfirmClear(false) })}
