@@ -4,6 +4,19 @@ import type { EvolutionStep } from "./insights.api";
 
 const icons: LucideIcon[] = [Check, Target, Calendar, Flag];
 
+// traduz o status que vem da IA (geralmente em ingles) pro portugues
+function statusLabel(status?: string): string {
+  if (!status) return "";
+  const map: Record<string, string> = {
+    current: "atual",
+    upcoming: "em breve",
+    next: "proximo",
+    done: "concluido",
+    completed: "concluido",
+  };
+  return map[status.trim().toLowerCase()] ?? status;
+}
+
 // trilha "Sua evolução financeira": 4 marcos ligados por uma linha.
 // recebe os passos calculados; sem dados (loading/erro) mostra placeholders.
 export function EvolutionTimeline({ steps, loading }: { steps?: EvolutionStep[]; loading?: boolean }) {
@@ -30,11 +43,13 @@ export function EvolutionTimeline({ steps, loading }: { steps?: EvolutionStep[];
               >
                 <Icon className="h-4 w-4" />
               </span>
-              <span className="mt-3 max-w-[7rem] text-xs text-muted">{step?.label ?? "—"}</span>
+              <span className="mt-3 flex h-8 max-w-[7rem] items-center text-xs leading-tight text-muted">
+                {step?.label ?? "—"}
+              </span>
               <span className="tnum mt-1 text-lg font-light text-heading">
                 {step ? `${Math.round(step.percent)}%` : loading ? "..." : "—"}
               </span>
-              <span className="text-xs text-brand">{step?.status ?? ""}</span>
+              <span className="text-xs text-brand">{statusLabel(step?.status)}</span>
             </div>
           );
         })}
