@@ -15,7 +15,7 @@ import santanderLogo from "../../assets/banks/santander.png";
 import bancoDoBrasilLogo from "../../assets/banks/banco-do-brasil.png";
 import c6Logo from "../../assets/banks/c6.png";
 import btgLogo from "../../assets/banks/btg.png";
-import xpLogo from "../../assets/banks/xp.png";
+import caixaLogo from "../../assets/banks/caixa.png";
 import picpayLogo from "../../assets/banks/picpay.png";
 
 type BankLogoProps = { className?: string };
@@ -51,7 +51,7 @@ const BANK_LOGOS: Record<string, BankLogo> = {
   c6: makeLogo(c6Logo, "C6 Bank", "contain"),
   "btg pactual": makeLogo(btgLogo, "BTG Pactual"),
   btg: makeLogo(btgLogo, "BTG Pactual"),
-  xp: makeLogo(xpLogo, "XP", "contain"),
+  caixa: makeLogo(caixaLogo, "Caixa", "contain"),
   picpay: makeLogo(picpayLogo, "PicPay", "contain"),
 };
 
