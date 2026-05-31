@@ -1,5 +1,6 @@
 import { Calendar, Check, Flag, Target } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { titleCase } from "../../lib/text";
 import type { EvolutionStep } from "./insights.api";
 
 const icons: LucideIcon[] = [Check, Target, Calendar, Flag];
@@ -8,11 +9,11 @@ const icons: LucideIcon[] = [Check, Target, Calendar, Flag];
 function statusLabel(status?: string): string {
   if (!status) return "";
   const map: Record<string, string> = {
-    current: "atual",
-    upcoming: "em breve",
-    next: "proximo",
-    done: "concluido",
-    completed: "concluido",
+    current: "Atual",
+    upcoming: "Em Breve",
+    next: "Próximo",
+    done: "Concluído",
+    completed: "Concluído",
   };
   return map[status.trim().toLowerCase()] ?? status;
 }
@@ -25,7 +26,7 @@ export function EvolutionTimeline({ steps, loading }: { steps?: EvolutionStep[];
 
   return (
     <div className="w-full">
-      <p className="mb-6 text-base font-light text-muted">Sua evolução financeira</p>
+      <p className="mb-6 text-base font-light text-muted">Sua Evolução Financeira</p>
       <div className="relative flex justify-between">
         {/* linha de conexao atras dos icones */}
         <div className="absolute left-5 right-5 top-5 h-px -translate-y-1/2 bg-border" />
@@ -44,7 +45,7 @@ export function EvolutionTimeline({ steps, loading }: { steps?: EvolutionStep[];
                 <Icon className="h-4 w-4" />
               </span>
               <span className="mt-3 flex h-8 max-w-[7rem] items-center text-xs leading-tight text-muted">
-                {step?.label ?? "—"}
+                {step ? titleCase(step.label) : "—"}
               </span>
               <span className="tnum mt-1 text-lg font-light text-heading">
                 {step ? `${Math.round(step.percent)}%` : loading ? "..." : "—"}

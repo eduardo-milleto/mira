@@ -130,13 +130,13 @@ export function OverviewPage() {
       <HeroCard userName={user?.name ?? ""} insights={insights.data} loading={insights.isLoading} />
 
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted">Resumo do mês selecionado</p>
+        <p className="text-sm text-muted">Resumo Do Mês Selecionado</p>
         <MonthSelect value={month} onChange={setMonth} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6">
-          <CardHeader title="Resultado do mês" period={monthLabel(month)} />
+          <CardHeader title="Resultado Do Mês" period={monthLabel(month)} />
           {monthLoading ? (
             <p className="mt-2 text-sm text-muted">Carregando...</p>
           ) : (
@@ -158,7 +158,7 @@ export function OverviewPage() {
                     <span className="tnum text-heading">{formatBRL(ganhosTotal)}</span>
                     {ganhosTotal === 0 && (
                       <Link to="/ganhos" className="text-brand transition hover:text-brand-dark">
-                        adicionar
+                        Adicionar
                       </Link>
                     )}
                   </span>
@@ -185,7 +185,7 @@ export function OverviewPage() {
                             to="/gastos"
                             className="text-sm text-brand transition hover:text-brand-dark"
                           >
-                            ver todos
+                            Ver Todos
                           </Link>
                         </li>
                       )}
@@ -193,7 +193,7 @@ export function OverviewPage() {
                   ) : (
                     <p className="mt-2 pl-3 text-sm text-muted">
                       <Link to="/gastos" className="text-brand transition hover:text-brand-dark">
-                        Adicionar gastos
+                        Adicionar Gastos
                       </Link>
                     </p>
                   )}
@@ -248,7 +248,7 @@ export function OverviewPage() {
       </div>
 
       <Card className="p-6">
-        <CardHeader title="Projeções anuais" period="Anual" />
+        <CardHeader title="Projeções Anuais" period="Anual" />
         {insights.isLoading ? (
           <p className="mt-2 text-sm text-muted">Calculando projeção...</p>
         ) : projection.length ? (

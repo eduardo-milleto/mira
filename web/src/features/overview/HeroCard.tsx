@@ -42,7 +42,7 @@ export function HeroCard({ userName, insights, loading }: HeroCardProps) {
             financeira.
           </p>
           <Button className="mt-6" onPress={() => navigate({ to: "/sugestoes" })}>
-            Ver recomendações
+            Ver Recomendações
             <ArrowRight className="h-4 w-4" />
           </Button>
           {insights?.insight && (

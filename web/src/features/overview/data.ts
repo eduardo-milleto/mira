@@ -10,7 +10,7 @@ export type FeatureLink = {
 };
 
 export const featureLinks: FeatureLink[] = [
-  { icon: CalendarDays, title: "Ganhos mensais", desc: "Acompanhe a evolução e a composição dos seus ganhos." },
+  { icon: CalendarDays, title: "Ganhos Mensais", desc: "Acompanhe a evolução e a composição dos seus ganhos." },
   { icon: BarChart3, title: "Projeções", desc: "Veja suas projeções futuras." },
   { icon: Sparkles, title: "Sugestões IA", desc: "Receba sugestões personalizadas." },
   { icon: PieChart, title: "Investimentos", desc: "Acompanhe e faça seus investimentos." },
