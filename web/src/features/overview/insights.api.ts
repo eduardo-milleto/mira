@@ -36,6 +36,7 @@ export type InvestmentInput = {
   category: string;
   value: number;
   expectedReturnPct: number | null;
+  monthlyContribution: number | null;
   notes: string | null;
 };
 
@@ -133,6 +134,7 @@ export function useInsightsData(kindFilter?: InvestmentKind) {
       value: i.value,
       // taxa efetiva: a realizada do historico quando existe, senao a expectativa manual
       expectedReturnPct: i.realizedReturnPct ?? i.expectedReturnPct,
+      monthlyContribution: i.monthlyContribution,
       notes: i.notes,
     })),
     returnRatePct: settings?.returnRatePct ?? 10,

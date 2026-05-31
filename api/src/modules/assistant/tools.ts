@@ -210,6 +210,7 @@ async function panorama(userId: string, now: Date) {
       categoria: i.category,
       valor: round2(i.value),
       rendimentoAnualPct: i.expectedReturnPct,
+      aporteMensalPlanejado: i.monthlyContribution,
       notas: i.notes,
     })),
     fontesDeRenda: ctx.incomes.map((i) => ({

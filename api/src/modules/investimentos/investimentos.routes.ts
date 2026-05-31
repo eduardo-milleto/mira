@@ -38,6 +38,7 @@ function publicInvestment(i: Investment) {
     category: i.category,
     value: i.value.toNumber(),
     expectedReturnPct: i.expectedReturnPct?.toNumber() ?? null,
+    monthlyContribution: i.monthlyContribution?.toNumber() ?? null,
     notes: i.notes,
     createdAt: i.createdAt,
   };
@@ -132,6 +133,7 @@ export async function investimentosRoutes(app: FastifyInstance) {
           category: parsed.data.category,
           value: parsed.data.value,
           expectedReturnPct: parsed.data.expectedReturnPct ?? null,
+          monthlyContribution: parsed.data.monthlyContribution ?? null,
           notes: parsed.data.notes ?? null,
         },
       });
