@@ -19,6 +19,8 @@ import caixaLogo from "../../assets/banks/caixa.png";
 import picpayLogo from "../../assets/banks/picpay.png";
 import rennerLogo from "../../assets/banks/renner.png";
 import xpLogo from "../../assets/banks/xp.png";
+import willLogo from "../../assets/banks/will.png";
+import neonLogo from "../../assets/banks/neon.png";
 
 type BankLogoProps = { className?: string };
 type BankLogo = (props: BankLogoProps) => JSX.Element;
@@ -57,6 +59,9 @@ const BANK_LOGOS: Record<string, BankLogo> = {
   picpay: makeLogo(picpayLogo, "PicPay", "contain"),
   renner: makeLogo(rennerLogo, "Renner"),
   xp: makeLogo(xpLogo, "XP"),
+  "will bank": makeLogo(willLogo, "Will Bank"),
+  will: makeLogo(willLogo, "Will Bank"),
+  neon: makeLogo(neonLogo, "Neon"),
 };
 
 // logos de bandeira (campo brand): so usados quando o banco nao tem logo proprio.
