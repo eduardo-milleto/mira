@@ -7,7 +7,6 @@ import { MoneyInput } from "../../components/ui/MoneyInput";
 import { PercentInput } from "../../components/ui/PercentInput";
 import { ComboboxField } from "../../components/ui/Combobox";
 import { cn } from "../../lib/cn";
-import { formatBRL } from "../../lib/format";
 import { categoriesForKind } from "./categories";
 import {
   useCreateInvestment,
@@ -56,8 +55,7 @@ export function InvestmentFormModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, investment]);
 
-  // na edicao o valor nao entra (so muda via eventos na linha do tempo), entao nao exige valor
-  const valid = name.trim().length > 0 && category.trim().length > 0 && (!!investment || value > 0);
+  const valid = name.trim().length > 0 && category.trim().length > 0 && value > 0;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -73,8 +71,9 @@ export function InvestmentFormModal({
     };
     const onSuccess = () => onOpenChange(false);
     if (investment) {
-      // edicao mexe so nos metadados; o valor evolui pelos eventos (aporte/rendimento/...)
-      update.mutate({ id: investment.id, input: meta }, { onSuccess });
+      // edicao tambem permite ajustar o valor direto; o backend joga a diferenca no saldo
+      // inicial pra nao criar evento novo. aporte/rendimento continuam pela linha do tempo
+      update.mutate({ id: investment.id, input: { ...meta, value } }, { onSuccess });
     } else {
       // criacao define o valor inicial (vira o evento "saldo inicial" no backend)
       create.mutate({ kind, value, ...meta }, { onSuccess });
@@ -111,10 +110,13 @@ export function InvestmentFormModal({
           placeholder="Escolha ou digite a categoria"
         />
         {investment ? (
-          <p className="rounded-xl border border-border bg-surface-2/50 px-4 py-3 text-xs text-faint">
-            O valor atual ({formatBRL(investment.value)}) muda pelas movimentações na linha do
-            tempo do ativo, não por aqui.
-          </p>
+          <div className="flex flex-col gap-2">
+            <MoneyInput label="Valor atual" value={value} onChange={setValue} />
+            <p className="text-xs text-faint">
+              Você pode ajustar o valor direto aqui. Pra manter o histórico de aportes e
+              rendimentos, registre na linha do tempo do ativo.
+            </p>
+          </div>
         ) : (
           <MoneyInput label="Valor atual" value={value} onChange={setValue} />
         )}
