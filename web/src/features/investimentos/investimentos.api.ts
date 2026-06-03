@@ -56,7 +56,12 @@ export function useUpdateInvestment() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: Partial<InvestmentInput> }) =>
       api.patch<{ investment: Investment }>(`/investimentos/investments/${id}`, input),
-    onSuccess: () => qc.invalidateQueries({ queryKey: investmentsKey }),
+    onSuccess: () => {
+      // ajustar o valor direto mexe no saldo inicial (linha do tempo) e na projecao
+      qc.invalidateQueries({ queryKey: investmentsKey });
+      qc.invalidateQueries({ queryKey: investmentEventsKey });
+      qc.invalidateQueries({ queryKey: ["insights"] });
+    },
   });
 }
 

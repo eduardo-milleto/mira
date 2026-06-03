@@ -34,15 +34,23 @@ export const investmentCreateSchema = z.object({
   notes: z.string().trim().max(500).nullish(),
 });
 
-// no update tudo opcional, mas precisa vir pelo menos um campo.
-// value saiu de proposito: a partir da Fase 2 o valor so muda via eventos (aporte/rendimento/
-// resgate/valorizacao/depreciacao), nunca por overwrite direto. expectedReturnPct e notes
-// aceitam null pra "limpar" a premissa
+// override direto do valor atual na edicao: a diferenca pro valor de hoje e jogada no evento
+// saldo_inicial (na rota), pra nao sujar a linha do tempo com um evento novo. aceita 0 (ativo
+// zerado), diferente do cadastro que exige valor positivo
+const valueOverride = z
+  .number()
+  .min(0, "Valor invalido")
+  .max(1_000_000_000, "Valor muito alto");
+
+// no update tudo opcional, mas precisa vir pelo menos um campo. value aqui e overwrite direto
+// (ajusta o saldo_inicial), enquanto aporte/rendimento/resgate/valorizacao/depreciacao continuam
+// passando pelos eventos. expectedReturnPct e notes aceitam null pra "limpar" a premissa
 export const investmentUpdateSchema = z
   .object({
     kind: investmentKind,
     name: z.string().trim().min(1, "Informe o nome").max(80),
     category: z.string().trim().min(1, "Informe a categoria").max(40),
+    value: valueOverride,
     expectedReturnPct: pct.nullable(),
     monthlyContribution: contribution.nullable(),
     notes: z.string().trim().max(500).nullable(),

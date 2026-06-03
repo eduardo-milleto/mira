@@ -157,14 +157,45 @@ export async function investimentosRoutes(app: FastifyInstance) {
     if (!parsed.success) {
       return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Dados invalidos" });
     }
-    // updateMany escopado por userId evita IDOR. value nao entra mais aqui (so via eventos)
-    const result = await prisma.investment.updateMany({
-      where: { id, userId: request.user.sub },
-      data: parsed.data,
-    });
-    if (result.count === 0) {
+    const userId = request.user.sub;
+    // value e tratado a parte (override direto); o resto sao metadados que vao direto no update
+    const { value: newValue, ...meta } = parsed.data;
+
+    // garante posse do ativo (evita IDOR) e da base pra calcular o delta do override
+    const existing = await prisma.investment.findFirst({ where: { id, userId } });
+    if (!existing) {
       return reply.code(404).send({ error: "Investimento nao encontrado" });
     }
+
+    await prisma.$transaction(async (tx) => {
+      if (Object.keys(meta).length > 0) {
+        await tx.investment.update({ where: { id }, data: meta });
+      }
+      // override direto do valor: joga a diferenca no saldo_inicial pra manter a soma dos
+      // deltas batendo com o valor, sem criar um evento novo na linha do tempo
+      if (newValue !== undefined) {
+        const delta = round2(newValue - existing.value.toNumber());
+        if (delta !== 0) {
+          const saldoInicial = await tx.investmentEvent.findFirst({
+            where: { investmentId: id, type: "saldo_inicial" },
+            orderBy: { occurredAt: "asc" },
+          });
+          if (saldoInicial) {
+            await tx.investmentEvent.update({
+              where: { id: saldoInicial.id },
+              data: { delta: { increment: delta } },
+            });
+          } else {
+            // ativo sem saldo inicial (dado legado): ancora a diferenca num saldo_inicial novo
+            await tx.investmentEvent.create({
+              data: { investmentId: id, userId, type: "saldo_inicial", delta, occurredAt: todayDateUTC() },
+            });
+          }
+          await tx.investment.update({ where: { id }, data: { value: newValue } });
+        }
+      }
+    });
+
     const investment = await prisma.investment.findUnique({ where: { id } });
     if (!investment) {
       return reply.code(404).send({ error: "Investimento nao encontrado" });
