@@ -131,9 +131,15 @@ export const toolDeclarations = [
     },
   },
   {
+    name: "cartoes",
+    description:
+      "Lista os cartões de crédito do usuário com o gasto mensal médio de cada um e o total gasto por mês no cartão. Use sempre que o usuário perguntar sobre cartão de crédito de forma geral ('quanto eu gasto com cartão de crédito por mês?', 'quanto vai no cartão?', 'qual é meu maior cartão?'). Para um cartão específico pelo nome, use 'buscar'. Cada cartão traz se entra ou não no gasto mensal fixo.",
+    parameters: { type: "OBJECT", properties: {} },
+  },
+  {
     name: "agregar_gastos",
     description:
-      "Soma os gastos do usuário num período, agrupados por categoria ou por mês. Considera gastos pessoais (compras do dia a dia) e gastos extras (pontuais). Use para 'quanto gastei em delivery nos últimos meses?', 'qual minha maior categoria de gasto?', 'gastei mais em qual mês?'. Sem período informado, usa o mês atual.",
+      "Soma os gastos do usuário num período, agrupados por categoria ou por mês. Considera gastos pessoais (compras do dia a dia) e gastos extras (pontuais). NÃO inclui cartões de crédito (para o gasto com cartão use a ferramenta 'cartoes'). Use para 'quanto gastei em delivery nos últimos meses?', 'qual minha maior categoria de gasto?', 'gastei mais em qual mês?'. Sem período informado, usa o mês atual.",
     parameters: {
       type: "OBJECT",
       properties: {
@@ -221,6 +227,34 @@ async function panorama(userId: string, now: Date) {
     })),
     gatilhosDoUsuario: ctx.triggers,
     projecao: { horizonteAnos: ctx.horizonYears },
+  };
+}
+
+// cartoes: lista os cartoes de credito do usuario com o gasto mensal medio de cada um e os
+// totais. o "gasto com cartao" e a media informada pelo usuario (avgMonthlySpend) — o app nao
+// guarda fatura/transacao, entao essa media e a fonte real do quanto-vai-no-cartao por mes.
+// totalMensal soma todos os cartoes; totalQueEntraNoMensal soma so os marcados como gasto fixo.
+async function cartoes(userId: string) {
+  const cards = await prisma.creditCard.findMany({
+    where: { userId },
+    orderBy: { avgMonthlySpend: "desc" },
+  });
+
+  const lista = cards.map((c) => ({
+    nome: c.name,
+    banco: c.bank,
+    bandeira: c.brand,
+    gastoMensalMedio: round2(c.avgMonthlySpend.toNumber()),
+    entraNoGastoMensal: c.includeInMonthly,
+  }));
+
+  return {
+    quantidade: lista.length,
+    totalMensal: round2(lista.reduce((sum, c) => sum + c.gastoMensalMedio, 0)),
+    totalQueEntraNoMensal: round2(
+      lista.filter((c) => c.entraNoGastoMensal).reduce((sum, c) => sum + c.gastoMensalMedio, 0),
+    ),
+    cartoes: lista,
   };
 }
 
@@ -577,6 +611,8 @@ export async function executeTool(
   switch (name) {
     case "panorama":
       return panorama(userId, now);
+    case "cartoes":
+      return cartoes(userId);
     case "buscar":
       return buscar(userId, args, now);
     case "agregar_gastos":
