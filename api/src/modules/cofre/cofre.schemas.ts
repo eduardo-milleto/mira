@@ -27,14 +27,20 @@ export const movementUpdateSchema = movementCreateSchema
   .refine((d) => Object.keys(d).length > 0, "Nada para atualizar");
 
 // fechamento de um mes. confirmedSurplus pode ser negativo quando o usuario confirma um mes
-// que fechou no negativo (deficit); o servidor recalcula o computedSurplus e exige reason
-// quando os dois diferem. so vira entrada no cofre quando confirmedSurplus > 0.
+// que fechou no negativo (deficit); o servidor recalcula a sobra bruta e exige reason quando
+// o confirmado difere do liquido esperado (bruto - aportes). contributionsApplied = soma dos
+// aportes marcados no checklist, descontados da sobra. so vira entrada no cofre quando > 0.
 export const monthCloseSchema = z.object({
   month: monthKey,
   confirmedSurplus: z
     .number()
     .min(-1_000_000_000, "Valor invalido")
     .max(1_000_000_000, "Valor muito alto"),
+  contributionsApplied: z
+    .number()
+    .min(0, "Valor invalido")
+    .max(1_000_000_000, "Valor muito alto")
+    .optional(),
   reason: z.string().trim().max(300).optional(),
 });
 

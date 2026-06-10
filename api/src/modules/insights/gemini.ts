@@ -128,17 +128,28 @@ function formatInvestments(
 // descreve os fechamentos de mes: o que o app calculou vs o confirmado. a diferenca (com
 // motivo) e o sinal de que entrou/saiu dinheiro fora do app — relevante pra IA entender
 function formatMonthCloses(
-  items: { month: string; computedSurplus: number; confirmedSurplus: number; reason?: string | null }[],
+  items: {
+    month: string;
+    computedSurplus: number;
+    contributionsApplied?: number;
+    confirmedSurplus: number;
+    reason?: string | null;
+  }[],
 ): string {
   if (!items.length) return "(nenhum)";
   return items
     .map((c) => {
-      const diff = c.confirmedSurplus - c.computedSurplus;
+      const aportes = c.contributionsApplied ?? 0;
+      // sobra liquida esperada = bruto - aportes do mes. a diferenca pro confirmado e o que
+      // entrou/saiu FORA do app (aportes ja sao esperados, nao contam como vazamento)
+      const net = c.computedSurplus - aportes;
+      const diff = c.confirmedSurplus - net;
+      const aportesPart = aportes > 0.005 ? `, aportes R$ ${aportes.toFixed(2)}` : "";
       const tag =
         Math.abs(diff) < 0.005
           ? "bateu com o app"
           : `diferenca de R$ ${diff.toFixed(2)}${c.reason ? ` — motivo: ${c.reason}` : " (sem motivo informado)"}`;
-      return `- ${c.month}: app calculou R$ ${c.computedSurplus}, confirmado R$ ${c.confirmedSurplus} (${tag})`;
+      return `- ${c.month}: app calculou R$ ${c.computedSurplus} (bruto)${aportesPart}, confirmado R$ ${c.confirmedSurplus} (${tag})`;
     })
     .join("\n");
 }

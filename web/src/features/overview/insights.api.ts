@@ -43,6 +43,7 @@ export type InvestmentInput = {
 export type MonthCloseInput = {
   month: string;
   computedSurplus: number;
+  contributionsApplied: number;
   confirmedSurplus: number;
   reason: string | null;
 };
@@ -142,6 +143,7 @@ export function useInsightsData(kindFilter?: InvestmentKind) {
     monthCloses: (cofreQuery.data?.closes ?? []).map((c) => ({
       month: c.month,
       computedSurplus: c.computedSurplus,
+      contributionsApplied: c.contributionsApplied,
       confirmedSurplus: c.confirmedSurplus,
       reason: c.reason,
     })),
