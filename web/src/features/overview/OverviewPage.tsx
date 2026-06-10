@@ -107,6 +107,10 @@ export function OverviewPage() {
 
   const investmentsQuery = useInvestments(!!user);
   const allAssets = investmentsQuery.data ?? [];
+  // aporte mensal planejado somado de todos os ativos (investimentos + bens). o liquido e o
+  // que sobra de verdade depois de separar esse dinheiro pros aportes do mes
+  const aportesEsperados = allAssets.reduce((sum, a) => sum + (a.monthlyContribution ?? 0), 0);
+  const resultadoLiquido = resultado - aportesEsperados;
   const patrimony = buildPatrimony(allAssets); // total geral (patrimonio + investimentos)
   // duas seccoes: investimentos (kind ausente conta aqui) e patrimonio (bens)
   const investAssets = allAssets.filter((i) => investmentKindOf(i) === "investimento");
@@ -195,6 +199,31 @@ export function OverviewPage() {
                     </p>
                   )}
                 </div>
+                {/* liquido = bruto - aportes mensais planejados; so aparece se ha aporte previsto */}
+                {aportesEsperados > 0 && (
+                  <div className="space-y-3 border-t border-border pt-3">
+                    <div className="flex items-baseline justify-between gap-3 text-sm">
+                      <span className="text-heading">Aportes Esperados</span>
+                      <span className="tnum text-muted">−{formatBRL(aportesEsperados)}</span>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-3 text-sm">
+                      <span className="text-heading">Líquido</span>
+                      <span
+                        className={cn(
+                          "tnum",
+                          resultadoLiquido > 0 && "text-positive",
+                          resultadoLiquido < 0 && "text-negative",
+                          resultadoLiquido === 0 && "text-heading",
+                        )}
+                      >
+                        {formatBRL(resultadoLiquido)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-faint">
+                      O que sobra depois de separar seus aportes planejados do mês.
+                    </p>
+                  </div>
+                )}
               </div>
             </>
           )}

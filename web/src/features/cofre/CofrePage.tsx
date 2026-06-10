@@ -148,6 +148,9 @@ export function CofrePage() {
                   </div>
                   <div className="shrink-0 text-right">
                     <span className="tnum text-sm text-heading">{formatBRL(c.confirmedSurplus)}</span>
+                    {c.contributionsApplied > 0 && (
+                      <p className="tnum text-xs text-faint">aportes: −{formatBRL(c.contributionsApplied)}</p>
+                    )}
                     {corrected && (
                       <p className="tnum text-xs text-faint">app: {formatBRL(c.computedSurplus)}</p>
                     )}

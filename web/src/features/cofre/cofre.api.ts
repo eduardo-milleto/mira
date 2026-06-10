@@ -18,8 +18,9 @@ export type CofreMovement = {
 export type MonthClose = {
   id: string;
   month: string; // "YYYY-MM"
-  computedSurplus: number;
-  confirmedSurplus: number;
+  computedSurplus: number; // sobra bruta (ganhos - gastos)
+  contributionsApplied: number; // aportes descontados no fechamento
+  confirmedSurplus: number; // sobra liquida confirmada
   reason: string | null;
   confirmedAt: string;
 };
@@ -43,6 +44,7 @@ export type MovementInput = {
 export type MonthCloseInput = {
   month: string;
   confirmedSurplus: number;
+  contributionsApplied?: number;
   reason?: string;
 };
 

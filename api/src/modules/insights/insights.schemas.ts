@@ -30,6 +30,7 @@ const investment = z.object({
 const monthClose = z.object({
   month: z.string(),
   computedSurplus: z.number(),
+  contributionsApplied: z.number().optional().default(0),
   confirmedSurplus: z.number(),
   reason: z.string().nullable().optional(),
 });

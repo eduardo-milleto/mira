@@ -67,6 +67,7 @@ function publicClose(c: MonthClose) {
     id: c.id,
     month: c.month,
     computedSurplus: c.computedSurplus.toNumber(),
+    contributionsApplied: c.contributionsApplied.toNumber(),
     confirmedSurplus: c.confirmedSurplus.toNumber(),
     reason: c.reason,
     confirmedAt: c.confirmedAt,
@@ -212,6 +213,7 @@ export async function cofreRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Dados invalidos" });
     }
     const { month, confirmedSurplus, reason } = parsed.data;
+    const contributionsApplied = round2(parsed.data.contributionsApplied ?? 0);
     const userId = request.user.sub;
     const now = new Date();
 
@@ -231,9 +233,27 @@ export async function cofreRoutes(app: FastifyInstance) {
       return reply.code(409).send({ error: "Esse mes ja foi fechado" });
     }
 
-    // servidor recalcula o valor (autoritativo): nunca confia no computed vindo do cliente
+    // servidor recalcula a sobra bruta (autoritativo): nunca confia no computed vindo do cliente
     const computed = await computeSurplus(userId, month, now);
-    const differs = Math.abs(confirmedSurplus - computed) > 0.005;
+
+    // os aportes marcados saem da sobra antes de ir pro cofre. o teto e a soma dos aportes
+    // mensais planejados dos ativos — o cliente nunca pode descontar mais do que isso sem
+    // que vire uma correcao manual (com motivo)
+    const assets = await prisma.investment.findMany({
+      where: { userId },
+      select: { monthlyContribution: true },
+    });
+    const maxContributions = round2(
+      assets.reduce((sum, a) => sum + (a.monthlyContribution?.toNumber() ?? 0), 0),
+    );
+    if (contributionsApplied > maxContributions + 0.005) {
+      return reply.code(400).send({ error: "Aportes acima do esperado" });
+    }
+
+    // sobra liquida esperada = bruto - aportes marcados. so exige motivo quando o usuario
+    // confirma um valor diferente desse liquido (correcao manual de verdade)
+    const expectedNet = round2(computed - contributionsApplied);
+    const differs = Math.abs(confirmedSurplus - expectedNet) > 0.005;
     if (differs && !(reason && reason.trim().length > 0)) {
       return reply.code(400).send({ error: "Informe o motivo da correcao" });
     }
@@ -244,6 +264,7 @@ export async function cofreRoutes(app: FastifyInstance) {
           userId,
           month,
           computedSurplus: computed,
+          contributionsApplied,
           confirmedSurplus,
           reason: differs ? reason!.trim() : null,
         },
