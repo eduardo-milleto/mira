@@ -94,9 +94,9 @@ export function CardsTab() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <p className="text-sm text-muted">Configure seus cartoes e escolha quais entram no gasto mensal</p>
-        <Button onPress={openCreate} className="px-4 py-2.5">
+        <Button onPress={openCreate} className="w-full shrink-0 px-4 py-2.5 sm:w-auto">
           <Plus className="h-4 w-4" />
           Adicionar cartao
         </Button>
@@ -148,7 +148,7 @@ export function CardsTab() {
           <p className="text-xs text-faint">Ajuste a busca ou os filtros para ver seus cartoes.</p>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {visible.map((card) => {
             const BankLogo = getBankLogo(card.bank, card.brand);
             return (
@@ -162,7 +162,7 @@ export function CardsTab() {
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-heading">{card.name}</p>
+                  <p className="line-clamp-2 break-words text-sm text-heading sm:line-clamp-1">{card.name}</p>
                   <p className="truncate text-xs text-faint">
                     {[card.bank, card.brand].filter(Boolean).join(" · ")}
                   </p>

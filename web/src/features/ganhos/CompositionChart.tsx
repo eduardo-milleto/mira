@@ -67,11 +67,11 @@ export function CompositionChart({ slices, total }: { slices: EarningsSlice[]; t
         </div>
       </div>
 
-      <ul className="flex-1 space-y-3">
+      <ul className="w-full min-w-0 flex-1 space-y-3 sm:w-auto">
         {slices.map((slice) => (
           <li key={slice.name} className="flex items-center gap-3 text-sm">
             <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: slice.color }} />
-            <span className="flex-1 text-heading">{slice.name}</span>
+            <span className="min-w-0 flex-1 truncate text-heading">{slice.name}</span>
             <span className="tnum text-heading">{formatBRL(slice.value)}</span>
             <span className="tnum w-12 text-right text-muted">{formatPct(slice.percent)}</span>
           </li>

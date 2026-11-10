@@ -15,6 +15,8 @@
 
   body {
     @apply bg-bg text-heading antialiased;
+    /* evita que o iOS aumente a fonte sozinho ao girar a tela */
+    -webkit-text-size-adjust: 100%;
     font-family: theme("fontFamily.sans");
     /* ss01 imita o set estilistico da Stripe quando a fonte suportar */
     font-feature-settings: "ss01", "cv01";
@@ -33,5 +35,15 @@
   .tnum {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
+  }
+}
+
+/* iOS Safari da zoom automatico ao focar campo com fonte < 16px. no mobile forca 16px nos
+   campos de texto (fora de @layer pra ganhar dos utilitarios text-sm) */
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }

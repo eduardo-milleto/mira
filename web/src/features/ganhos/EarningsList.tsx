@@ -39,9 +39,9 @@ export function EarningsList() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <p className="text-sm text-muted">Suas fontes de renda mensais</p>
-        <Button onPress={openCreate} className="px-4 py-2.5">
+        <Button onPress={openCreate} className="w-full shrink-0 px-4 py-2.5 sm:w-auto">
           <Plus className="h-4 w-4" />
           Adicionar fonte de renda
         </Button>
@@ -60,9 +60,9 @@ export function EarningsList() {
           </div>
         ) : (
           incomes.map((income) => (
-            <div key={income.id} className="flex items-center gap-4 px-5 py-4">
+            <div key={income.id} className="flex items-center gap-3 px-4 py-4 sm:gap-4 sm:px-5">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-heading">{income.name}</p>
+                <p className="line-clamp-2 break-words text-sm text-heading sm:line-clamp-1">{income.name}</p>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-faint">
                   {income.annualGrowthPct !== 0 && (
                     <span className="flex items-center gap-1">

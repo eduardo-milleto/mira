@@ -41,7 +41,7 @@ export function ProjectionSettingsCard() {
         próprio investimento.
       </p>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <ComboboxField
           label="Horizonte (anos)"
           options={HORIZON_OPTIONS}

@@ -16,25 +16,27 @@ type ModalProps = {
   className?: string;
 };
 
-// modal base do sistema: overlay escurecido + card com o estilo padrao (rounded-2xl, blur)
+// modal base do sistema: overlay escurecido + card com o estilo padrao (rounded-2xl, blur).
+// no mobile vira bottom sheet (encostado embaixo, largura total) e o corpo rola quando o
+// formulario passa da altura da tela
 export function Modal({ isOpen, onOpenChange, title, children, className }: ModalProps) {
   return (
     <ModalOverlay
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       isDismissable
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4"
     >
       <AriaModal
         className={cn(
-          "w-full max-w-md rounded-2xl border border-border bg-surface/95 shadow-card backdrop-blur outline-none",
+          "flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-2xl border border-border bg-surface/95 shadow-card backdrop-blur outline-none sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl",
           className,
         )}
       >
-        <Dialog className="outline-none">
+        <Dialog className="flex min-h-0 flex-1 flex-col outline-none">
           {({ close }) => (
             <>
-              <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
+              <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-4 py-4 sm:px-6">
                 <Heading slot="title" className="text-lg font-medium text-heading">
                   {title}
                 </Heading>
@@ -47,7 +49,9 @@ export function Modal({ isOpen, onOpenChange, title, children, className }: Moda
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <div className="px-6 py-5">{children}</div>
+              <div className="min-h-0 overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-5">
+                {children}
+              </div>
             </>
           )}
         </Dialog>

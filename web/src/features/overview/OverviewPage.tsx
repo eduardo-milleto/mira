@@ -52,14 +52,14 @@ function PatrimonySection({
   const up = (expectedPct ?? 0) >= 0;
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <span className="text-xs uppercase tracking-wide text-faint">{label}</span>
-        <span className="flex items-baseline gap-2">
+        <span className="ml-auto flex items-baseline gap-2">
           {showPct && (
             <span
               title="Variação mensal esperada pela taxa de rendimento de cada ativo"
               className={cn(
-                "tnum rounded-full px-2 py-0.5 text-xs",
+                "tnum whitespace-nowrap rounded-full px-2 py-0.5 text-xs",
                 up ? "bg-brand-soft text-brand" : "bg-negative/10 text-negative",
               )}
             >
@@ -135,7 +135,7 @@ export function OverviewPage() {
         <MonthSelect value={month} onChange={setMonth} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="p-6">
           <CardHeader title="Resultado Do Mês" period={monthLabel(month)} />
           {monthLoading ? (
@@ -279,12 +279,12 @@ export function OverviewPage() {
           <p className="mt-2 text-sm text-muted">Calculando projeção...</p>
         ) : projection.hasData ? (
           <>
-            <div className="mt-2 flex items-center gap-3">
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
               <p className="tnum text-3xl font-light tracking-tighter text-heading">
                 {formatBRL(projection.last ?? 0)}
               </p>
               {projection.growth !== null && projection.span > 0 && (
-                <span className="tnum rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
+                <span className="tnum whitespace-nowrap rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
                   {projection.growth >= 0 ? "+" : ""}
                   {projection.growth}% em {projection.span}{" "}
                   {projection.span === 1 ? "ano" : "anos"}
@@ -300,7 +300,7 @@ export function OverviewPage() {
         )}
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {featureLinks.map((f) => (
           <FeatureCard key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
         ))}

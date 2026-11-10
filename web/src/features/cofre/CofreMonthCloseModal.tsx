@@ -122,11 +122,11 @@ export function CofreMonthCloseModal({ pendingMonths }: { pendingMonths: Pending
       isOpen
       isDismissable={false}
       isKeyboardDismissDisabled
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-4"
     >
-      <AriaModal className="w-full max-w-lg rounded-2xl border border-border bg-surface/95 shadow-card backdrop-blur outline-none">
+      <AriaModal className="w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-border bg-surface/95 shadow-card backdrop-blur outline-none">
         <Dialog className="outline-none">
-          <div className="border-b border-border px-6 py-4">
+          <div className="border-b border-border px-4 py-4 sm:px-6">
             <Heading slot="title" className="text-lg font-medium text-heading">
               {multiple ? "Confirme o que sobrou nesses meses" : "Confirme o que sobrou no mês"}
             </Heading>
@@ -137,7 +137,7 @@ export function CofreMonthCloseModal({ pendingMonths }: { pendingMonths: Pending
             </p>
           </div>
 
-          <div className="max-h-[55vh] overflow-y-auto px-6 py-5">
+          <div className="max-h-[55dvh] overflow-y-auto px-4 py-5 sm:px-6">
             <div className="flex flex-col gap-4">
               {pendingMonths.map((p) => {
                 const e = entries[p.month];
@@ -248,7 +248,7 @@ export function CofreMonthCloseModal({ pendingMonths }: { pendingMonths: Pending
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-border px-6 py-4">
+          <div className="flex flex-col gap-3 border-t border-border px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
             {error && <p className="text-sm text-negative">{error}</p>}
             <Button
               onPress={handleConfirmAll}
