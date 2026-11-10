@@ -32,7 +32,7 @@ export function HeroCard({ userName, insights, loading }: HeroCardProps) {
       />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-bg/95 via-bg/70 to-bg/85" />
 
-      <div className="relative grid gap-8 p-8 lg:grid-cols-[1.1fr_auto_1.1fr] lg:items-center">
+      <div className="relative grid grid-cols-1 gap-8 p-8 lg:grid-cols-[1.1fr_auto_1.1fr] lg:items-center">
         <div className="max-w-md">
           <h1 className="text-3xl font-light leading-tight tracking-tighter">
             Bom ver você aqui, <span className="text-brand">{firstName(userName)}.</span>

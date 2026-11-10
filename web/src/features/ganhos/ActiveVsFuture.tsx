@@ -18,7 +18,7 @@ export function ActiveVsFuture({ active, future, futureYear, minYear, maxYear, o
   const growth = active > 0 ? (future / active - 1) * 100 : 0;
 
   return (
-    <div className="flex gap-6">
+    <div className="flex flex-col gap-6 min-[420px]:flex-row">
       <div className="min-w-0 flex-1">
         <p className="text-sm text-muted">Ativa agora</p>
         <p className="tnum mt-2 whitespace-nowrap text-2xl font-light tracking-tighter text-heading">

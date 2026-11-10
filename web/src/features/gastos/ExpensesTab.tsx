@@ -32,9 +32,9 @@ export function ExpensesTab() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <p className="text-sm text-muted">Seus gastos mensais cadastrados</p>
-        <Button onPress={openCreate} className="px-4 py-2.5">
+        <Button onPress={openCreate} className="w-full shrink-0 px-4 py-2.5 sm:w-auto">
           <Plus className="h-4 w-4" />
           Adicionar gasto
         </Button>
@@ -51,8 +51,8 @@ export function ExpensesTab() {
           </div>
         ) : (
           expenses.map((expense) => (
-            <div key={expense.id} className="flex items-center gap-4 px-5 py-4">
-              <span className="min-w-0 flex-1 truncate text-sm text-heading">{expense.name}</span>
+            <div key={expense.id} className="flex items-center gap-3 px-4 py-4 sm:gap-4 sm:px-5">
+              <span className="line-clamp-2 min-w-0 flex-1 break-words text-sm text-heading sm:line-clamp-1">{expense.name}</span>
               <span className="tnum shrink-0 text-sm text-heading">{formatBRL(expense.amount)}</span>
               <div className="flex shrink-0 items-center gap-1">
                 <button

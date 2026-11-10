@@ -148,7 +148,7 @@ export function IncomeFormModal({ isOpen, onOpenChange, income }: IncomeFormModa
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <ComboboxField
                       label="Ano"
                       options={FUTURE_YEARS}

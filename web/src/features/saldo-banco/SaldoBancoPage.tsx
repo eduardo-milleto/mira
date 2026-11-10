@@ -78,7 +78,7 @@ export function SaldoBancoPage() {
                   <Building2 className="h-4 w-4 text-faint" />
                   {data.institutionName ?? "Banco conectado"}
                 </p>
-                <p className="tnum mt-2 text-4xl font-light tracking-tighter text-heading">
+                <p className="tnum mt-2 text-3xl font-light sm:text-4xl tracking-tighter text-heading">
                   {formatBRL(data.currentBalance)}
                 </p>
                 <p className="mt-1 text-xs text-faint">
