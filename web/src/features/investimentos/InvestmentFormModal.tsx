@@ -35,6 +35,8 @@ export function InvestmentFormModal({
   const [expectedReturnPct, setExpectedReturnPct] = useState(0);
   const [monthlyContribution, setMonthlyContribution] = useState(0);
   const [notes, setNotes] = useState("");
+  // so mostra o aviso de campo faltando depois que a pessoa tenta salvar
+  const [triedSubmit, setTriedSubmit] = useState(false);
   const create = useCreateInvestment();
   const update = useUpdateInvestment();
   const pending = create.isPending || update.isPending;
@@ -49,16 +51,24 @@ export function InvestmentFormModal({
       setExpectedReturnPct(investment?.expectedReturnPct ?? 0);
       setMonthlyContribution(investment?.monthlyContribution ?? 0);
       setNotes(investment?.notes ?? "");
+      setTriedSubmit(false);
       create.reset();
       update.reset();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, investment]);
 
-  const valid = name.trim().length > 0 && category.trim().length > 0 && value > 0;
+  // lista o que falta pra o clique em Salvar nunca parecer travado sem explicacao
+  const missing = [
+    name.trim().length === 0 && "nome",
+    category.trim().length === 0 && "categoria",
+    value <= 0 && "valor atual",
+  ].filter((field): field is string => Boolean(field));
+  const valid = missing.length === 0;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    setTriedSubmit(true);
     if (!valid || pending) return;
     const meta = {
       name: name.trim(),
@@ -162,17 +172,26 @@ export function InvestmentFormModal({
           </p>
         </div>
 
+        {triedSubmit && !valid && (
+          <p className="text-sm text-negative">Preencha {formatList(missing)} para salvar.</p>
+        )}
         {error && <p className="text-sm text-negative">{error.message}</p>}
 
         <div className="mt-1 flex justify-end gap-3">
           <Button variant="ghost" onPress={() => onOpenChange(false)} isDisabled={pending}>
             Cancelar
           </Button>
-          <Button type="submit" isPending={pending} isDisabled={!valid || pending}>
+          <Button type="submit" isPending={pending} isDisabled={pending}>
             {pending ? "Salvando..." : "Salvar"}
           </Button>
         </div>
       </form>
     </Modal>
   );
+}
+
+// ["nome", "categoria"] -> "nome e categoria"
+function formatList(items: string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} e ${items[items.length - 1]}`;
 }
