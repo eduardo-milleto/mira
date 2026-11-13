@@ -65,9 +65,9 @@ export function CofrePage() {
       <CofreBalanceHero balance={balance} isLoading={isLoading} />
 
       <div className="flex flex-col gap-5">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <p className="text-sm text-muted">Movimentações</p>
-          <Button onPress={openCreate} className="px-4 py-2.5">
+          <Button onPress={openCreate} className="w-full shrink-0 px-4 py-2.5 sm:w-auto">
             <Plus className="h-4 w-4" />
             Lançar movimentação
           </Button>
@@ -88,15 +88,18 @@ export function CofrePage() {
             movements.map((m) => {
               const isEntrada = m.direction === "entrada";
               return (
-                <div key={m.id} className="flex items-center gap-4 px-5 py-4">
-                  <span className="tnum w-14 shrink-0 text-xs text-faint">
+                <div key={m.id} className="flex items-center gap-3 px-4 py-4 sm:gap-4 sm:px-5">
+                  <span className="tnum hidden w-14 shrink-0 text-xs text-faint sm:block">
                     {formatDay(m.occurredAt)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-heading">
+                    <p className="line-clamp-2 break-words text-sm text-heading sm:line-clamp-1">
                       {m.notes || SOURCE_LABEL[m.source] || "Movimentação"}
                     </p>
-                    <p className="truncate text-xs text-faint">{SOURCE_LABEL[m.source] ?? m.source}</p>
+                    <p className="truncate text-xs text-faint">
+                      <span className="tnum sm:hidden">{formatDay(m.occurredAt)} · </span>
+                      {SOURCE_LABEL[m.source] ?? m.source}
+                    </p>
                   </div>
                   <span
                     className={cn("tnum shrink-0 text-sm", isEntrada ? "text-brand" : "text-negative")}

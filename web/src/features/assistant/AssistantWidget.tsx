@@ -96,9 +96,10 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
   return (
     <div
       className={cn(
-        "flex w-[calc(100vw-2rem)] max-w-[400px] flex-col overflow-hidden rounded-2xl",
-        "border border-border bg-surface/95 shadow-card backdrop-blur",
-        "h-[min(600px,calc(100vh-7rem))]",
+        "flex flex-col overflow-hidden border-border bg-surface/95 shadow-card backdrop-blur",
+        // mobile: tela cheia (respeitando notch/home indicator); a partir de sm: painel flutuante
+        "fixed inset-0 h-[100dvh] w-full pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
+        "sm:static sm:h-[min(600px,calc(100vh-7rem))] sm:w-[400px] sm:rounded-2xl sm:border sm:p-0",
       )}
       role="dialog"
       aria-label="Assistente Mira"
@@ -128,7 +129,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-faint transition hover:bg-white/5 hover:text-heading"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-faint transition hover:bg-white/5 hover:text-heading sm:h-8 sm:w-8"
             aria-label="Fechar"
           >
             <X className="h-4 w-4" />
@@ -252,7 +253,7 @@ export function AssistantWidget() {
   }, [open]);
 
   return (
-    <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
+    <div className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-40 flex flex-col items-end gap-3 sm:right-5">
       {open && <ChatPanel onClose={() => setOpen(false)} />}
 
       <button
@@ -261,7 +262,9 @@ export function AssistantWidget() {
         aria-label={open ? "Fechar assistente" : "Abrir assistente"}
         aria-expanded={open}
         className={cn(
-          "flex h-14 w-14 items-center justify-center rounded-full shadow-glow outline-none transition",
+          // no mobile o painel cobre a tela e tem o proprio botao de fechar
+          open ? "hidden sm:flex" : "flex",
+          "h-14 w-14 items-center justify-center rounded-full shadow-glow outline-none transition",
           "bg-brand-gradient text-black hover:brightness-110",
           "focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
         )}

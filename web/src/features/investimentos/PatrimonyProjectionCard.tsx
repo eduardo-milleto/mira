@@ -73,12 +73,12 @@ export function PatrimonyProjectionCard() {
         </p>
       ) : (
         <>
-          <div className="mt-2 flex items-center gap-3">
-            <p className="tnum text-4xl font-light tracking-tighter text-heading">
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <p className="tnum text-3xl sm:text-4xl font-light tracking-tighter text-heading">
               {formatBRL(last ?? 0)}
             </p>
             {growth !== null && span > 0 && (
-              <span className="tnum rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
+              <span className="tnum whitespace-nowrap rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
                 {growth >= 0 ? "+" : ""}
                 {growth}% em {span} {span === 1 ? "ano" : "anos"}
               </span>

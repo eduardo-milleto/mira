@@ -29,7 +29,7 @@ export function BalanceProjectionCard({ state }: { state: BankConnected }) {
       <div className="mt-3 flex items-end gap-3">
         <div>
           <p className="text-xs text-faint">Fim do mes previsto</p>
-          <p className="tnum mt-1 text-4xl font-light tracking-tighter text-heading">
+          <p className="tnum mt-1 text-3xl font-light sm:text-4xl tracking-tighter text-heading">
             {formatBRL(projectedEndBalance)}
           </p>
         </div>

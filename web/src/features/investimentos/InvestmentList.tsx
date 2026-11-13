@@ -84,9 +84,9 @@ export function InvestmentList({ kind }: { kind: InvestmentKind }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <p className="text-sm text-muted">{copy.listHint}</p>
-        <Button onPress={openCreate} className="px-4 py-2.5">
+        <Button onPress={openCreate} className="w-full shrink-0 px-4 py-2.5 sm:w-auto">
           <Plus className="h-4 w-4" />
           {copy.addButton}
         </Button>
@@ -119,7 +119,7 @@ export function InvestmentList({ kind }: { kind: InvestmentKind }) {
                     return (
                       <div key={inv.id}>
                         <div
-                          className="flex cursor-pointer items-center gap-3 px-5 py-4 transition hover:bg-white/[0.02]"
+                          className="flex cursor-pointer items-center gap-2 px-4 py-4 transition sm:gap-3 sm:px-5 hover:bg-white/[0.02]"
                           onClick={() => setExpanded(isOpen ? null : inv.id)}
                         >
                           <ChevronRight
@@ -129,7 +129,7 @@ export function InvestmentList({ kind }: { kind: InvestmentKind }) {
                             )}
                           />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm text-heading">{inv.name}</p>
+                            <p className="line-clamp-2 break-words text-sm text-heading sm:line-clamp-1">{inv.name}</p>
                             {(rate != null || inv.notes) && (
                               <p className="truncate text-xs text-faint">
                                 {rate != null && (

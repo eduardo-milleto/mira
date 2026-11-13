@@ -61,7 +61,7 @@ export function GanhosPage() {
       <TabPanel id="dashboard" className="flex flex-col gap-6 outline-none">
         <EarningsHero total={ganhosTotal} />
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card className="p-6">
             <CardHeader title="Composição dos ganhos" period="Este mês" />
             <div className="mt-6">
@@ -105,7 +105,7 @@ export function GanhosPage() {
           </Card>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {featureLinks.map((f) => (
             <FeatureCard key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
           ))}
